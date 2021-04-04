@@ -5,6 +5,9 @@ from geometry_msgs.msg import Quaternion, Pose
 from std_msgs.msg import Float64
 
 import pika
+import psycopg2
+from psycopg2 import Error
+
 
 credentials = pika.PlainCredentials('admin', 'admin')
 connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.0.33',
@@ -23,6 +26,13 @@ channel.exchange_declare("temperature", exchange_type='topic', passive=False,
 channel.exchange_declare("pressure", exchange_type='topic', passive=False,
                          durable=False, auto_delete=False, arguments=None)
 
+connection = psycopg2.connect(user="postgres",
+                              # пароль, который указали при установке PostgreSQL
+                              password="1111",
+                              host="127.0.0.1",
+                              port="5432",
+                              database="postgres_db")
+
 
 def wind_velocity(data):
     """Option 1"""
@@ -36,6 +46,7 @@ def wind_velocity(data):
         properties=pika.BasicProperties(
             delivery_mode=2,
         ))
+
 
 
 def wind_direction_callback(data):

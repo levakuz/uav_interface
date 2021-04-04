@@ -3,6 +3,8 @@ import rospy
 import json
 from geometry_msgs.msg import Quaternion, Pose
 from geometry_msgs.msg import Twist
+import psycopg2
+from psycopg2 import Error
 
 import pika
 
@@ -20,6 +22,12 @@ channel.exchange_declare("geoposition", exchange_type='topic', passive=False,
 channel.exchange_declare("goals", exchange_type='topic', passive=False,
                          durable=False, auto_delete=False, arguments=None)
 
+connection = psycopg2.connect(user="postgres",
+                              # пароль, который указали при установке PostgreSQL
+                              password="1111",
+                              host="127.0.0.1",
+                              port="5432",
+                              database="postgres_db")
 
 def pose_co_callback(data):
     rospy.loginfo(rospy.get_caller_id() + "I heard %s", data)
