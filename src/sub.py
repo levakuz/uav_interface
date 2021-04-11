@@ -7,14 +7,15 @@ from std_msgs.msg import Float64
 import psycopg2
 from psycopg2 import Error
 import pika
+import datetime
 
 credentials = pika.PlainCredentials('admin', 'admin')
-connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.0.33',
+connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.1.105',
                                                                5672,
                                                                '/',
                                                                credentials))
 channel = connection.channel()
-print(channel)
+# print(channel)
 
 channel.exchange_declare("geoposition", exchange_type='topic', passive=False,
                          durable=False, auto_delete=False, arguments=None)
@@ -34,14 +35,14 @@ channel.exchange_declare("goals", exchange_type='topic', passive=False,
                          durable=False, auto_delete=False, arguments=None)
 
 connection_db = psycopg2.connect(user="postgres",
-                              # пароль, который указали при установке PostgreSQL
-                              password="1111",
+                              password="vfvfcdtnf",
                               host="127.0.0.1",
                               port="5432",
                               database="postgres_db")
 
-time = 0
+# time = 0
 def pose_co_callback(data):
+    time = datetime.datetime.now().time()
     rospy.loginfo(rospy.get_caller_id() + "I heard %s", data)
     json_data = {"coordinates": {}, "angles": {}}
     json_data["coordinates"]["x"] = data.position.x
@@ -53,14 +54,17 @@ def pose_co_callback(data):
     json_data["angles"]["w"] = data.orientation.w
     print(json_data)
     cursor = connection_db.cursor()
-    update_query = """Update dynamic_params set params = {} where time = {}""".format(data, time)
-    cursor.execute(update_query)
+    insert_query = """ INSERT INTO dynamic_params (time, params)
+                                  VALUES (%s, %s)"""
+    item_tuple = (time, json.dumps(json_data))
+    # update_query = """Update dynamic_params set params = {} where time = {}""".format(json_data, time)
+    cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
-    print(count, "Запись успешно обновлена")
-    # Получить результат
-    cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
-    print("Результат", cursor.fetchall())
+    print(count, "Succesfull update")
+    # print(time)
+    # cursor.execute("SELECT * from dynamic_params WHERE time = (%s)", time)
+    # print("Result", cursor.fetchall())
     channel.basic_publish(
         exchange='geoposition',
         routing_key="CO",
@@ -71,6 +75,7 @@ def pose_co_callback(data):
 
 
 def goal_co_callback(data):
+    time = datetime.datetime.now().time()
     rospy.loginfo(rospy.get_caller_id() + "I heard %s", data)
     json_data = {"coordinates": {}, "angles": {}}
     json_data["coordinates"]["x"] = data.position.x
@@ -81,14 +86,16 @@ def goal_co_callback(data):
     json_data["angles"]["z"] = data.orientation.z
     json_data["angles"]["w"] = data.orientation.w
     cursor = connection_db.cursor()
-    update_query = """Update dynamic_params set params = {} where time = {}""".format(data, time)
-    cursor.execute(update_query)
+    insert_query = """ INSERT INTO dynamic_params (time, params)
+                                      VALUES (%s, %s)"""
+    item_tuple = (time, json.dumps(json_data))
+    cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
-    print(count, "Запись успешно обновлена")
-    # Получить результат
-    cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
-    print("Результат", cursor.fetchall())
+    print(count, "Succesfull update")
+    # Get result
+    # cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
+    # print("Result", cursor.fetchall())
     channel.basic_publish(
         exchange='goals',
         routing_key="CO",
@@ -99,6 +106,7 @@ def goal_co_callback(data):
 
 
 def trajectory_co_callback(data):
+    time = datetime.datetime.now().time()
     rospy.loginfo(rospy.get_caller_id() + "I heard %s", data)
     json_data = []
     point_data = {"coordinates": {}, "angles": {}}
@@ -112,14 +120,16 @@ def trajectory_co_callback(data):
         point_data["angles"]["w"] = point.orientation.w
         json_data.append(point_data)
     cursor = connection_db.cursor()
-    update_query = """Update dynamic_params set params = {} where time = {}""".format(data, time)
-    cursor.execute(update_query)
+    insert_query = """ INSERT INTO dynamic_params (time, params)
+                                      VALUES (%s, %s)"""
+    item_tuple = (time, json.dumps(json_data))
+    cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
-    print(count, "Запись успешно обновлена")
-    # Получить результат
-    cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
-    print("Результат", cursor.fetchall())
+    print(count, "Succesfull update")
+    # Get result
+    # cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
+    # print("Result", cursor.fetchall())
     channel.basic_publish(
         exchange='trajectory',
         routing_key="CO",
@@ -130,6 +140,7 @@ def trajectory_co_callback(data):
 
 
 def cmd_vel_co_callback(data):
+    time = datetime.datetime.now().time()
     rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
     vel_data = {"linear": {}, "angular": {}}
     vel_data["linear"]["x"] = data.linear.x
@@ -139,14 +150,16 @@ def cmd_vel_co_callback(data):
     vel_data["angular"]["y"] = data.angular.y
     vel_data["angular"]["z"] = data.angular.z
     cursor = connection_db.cursor()
-    update_query = """Update dynamic_params set params = {} where time = {}""".format(data, time)
-    cursor.execute(update_query)
+    insert_query = """ INSERT INTO dynamic_params (time, params)
+                                      VALUES (%s, %s)"""
+    item_tuple = (time, json.dumps(vel_data))
+    cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
-    print(count, "Запись успешно обновлена")
-    # Получить результат
-    cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
-    print("Результат", cursor.fetchall())
+    print(count, "Succesfull update")
+    # Get result
+    # cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
+    # print("Result", cursor.fetchall())
     channel.basic_publish(
         exchange='velocity',
         routing_key="CO",
@@ -158,17 +171,20 @@ def cmd_vel_co_callback(data):
 
 def wind_velocity(data):
     """Option 1"""
+    time = datetime.datetime.now().time()
     rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
-    vel_data = {"velocity": data}
+    vel_data = {"velocity": data.data}
     cursor = connection_db.cursor()
-    update_query = """Update environment set wind_vel = {} where time = {}""".format(data, time)
-    cursor.execute(update_query)
+    insert_query = """ INSERT INTO environment (time, wind_vel)
+                                      VALUES (%s, %s)"""
+    item_tuple = (time,data.data)
+    cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
-    print(count, "Запись успешно обновлена")
-    # Получить результат
-    cursor.execute("SELECT * from environment where time = {}".format(time))
-    print("Результат", cursor.fetchall())
+    print(count, "Succesfull update")
+    # Get result
+    # cursor.execute("SELECT * from environment where time = {}".format(time))
+    # print("Result", cursor.fetchall())
     channel.basic_publish(
         exchange='velocity',
         routing_key="wind",
@@ -180,6 +196,7 @@ def wind_velocity(data):
 
 def wind_direction_callback(data):
     """ Option 2"""
+    time = datetime.datetime.now().time()
     rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
     vel_data = {"direction": {}}
     vel_data["velocity"] = data.velocity
@@ -187,14 +204,14 @@ def wind_direction_callback(data):
     vel_data["direction"]["y"] = data.direction.y
     vel_data["direction"]["z"] = data.direction.z
     cursor = connection_db.cursor()
-    update_query = """Update environment set wind_coords = {} where time = {}""".format(data, time)
-    cursor.execute(update_query)
+    insert_query = """ INSERT INTO environment (time, wind_coords)
+                                      VALUES (%s, %s)"""
+    item_tuple = (time, json.dumps(vel_data))
+    cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
-    print(count, "Запись успешно обновлена")
-    # Получить результат
-    cursor.execute("SELECT * from environment where time = {}".format(time))
-    print("Результат", cursor.fetchall())
+    print(count, "Succesfull update")
+    # print("Result", cursor.fetchall())
     channel.basic_publish(
         exchange='direction',
         routing_key="wind",
@@ -205,17 +222,18 @@ def wind_direction_callback(data):
 
 
 def temperature_callback(data):
+    time = datetime.datetime.now().time()
     rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
     temp_data = {"temperature": data}
     cursor = connection_db.cursor()
-    update_query = """Update environment set temp = {} where time = {}""".format(data, time)
-    cursor.execute(update_query)
+    insert_query = """ INSERT INTO environment (time, temp)
+                                      VALUES (%s, %s)"""
+    item_tuple = (time, data.data)
+    cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
-    print(count, "Запись успешно обновлена")
-    # Получить результат
-    cursor.execute("SELECT * from environment where time = {}".format(time))
-    print("Результат", cursor.fetchall())
+    print(count, "Succesfull update")
+    # print("Result", cursor.fetchall())
     channel.basic_publish(
         exchange='temperature',
         routing_key="",
@@ -226,6 +244,7 @@ def temperature_callback(data):
 
 
 def local_position_uav_callback(data):
+    time = datetime.datetime.now().time()
     rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
     json_data = {"coordinates": {}, "angles": {}}
     json_data["coordinates"]["x"] = data.position.x
@@ -236,14 +255,16 @@ def local_position_uav_callback(data):
     json_data["angles"]["z"] = data.orientation.z
     json_data["angles"]["w"] = data.orientation.w
     cursor = connection_db.cursor()
-    update_query = """Update dynamic_params set params = {} where time = {}""".format(data, time)
-    cursor.execute(update_query)
+    insert_query = """ INSERT INTO dynamic_params (time, params)
+                                        VALUES (%s, %s)"""
+    item_tuple = (time, json.dumps(json_data))
+    cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
-    print(count, "Запись успешно обновлена")
-    # Получить результат
-    cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
-    print("Результат", cursor.fetchall())
+    print(count, "Succesfull update")
+    # Get result
+    # cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
+    # print("Result", cursor.fetchall())
     channel.basic_publish(
         exchange='geoposition',
         routing_key="UAV_local",
@@ -254,6 +275,7 @@ def local_position_uav_callback(data):
 
 
 def global_position_uav_callback(data):
+    time = datetime.datetime.now().time()
     rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
     json_data = {"coordinates": {}, "angles": {}}
     json_data["coordinates"]["x"] = data.position.x
@@ -264,14 +286,16 @@ def global_position_uav_callback(data):
     json_data["angles"]["z"] = data.orientation.z
     json_data["angles"]["w"] = data.orientation.w
     cursor = connection_db.cursor()
-    update_query = """Update dynamic_params set params = {} where time = {}""".format(data, time)
-    cursor.execute(update_query)
+    insert_query = """ INSERT INTO dynamic_params (time, params)
+                                        VALUES (%s, %s)"""
+    item_tuple = (time, json.dumps(json_data))
+    cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
-    print(count, "Запись успешно обновлена")
-    # Получить результат
-    cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
-    print("Результат", cursor.fetchall())
+    print(count, "Succesfull update")
+    # Get result
+    # cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
+    # print("Result", cursor.fetchall())
     channel.basic_publish(
         exchange='geoposition',
         routing_key="UAV_global",
@@ -282,17 +306,20 @@ def global_position_uav_callback(data):
 
 
 def voltage_uav_callback(data):
+    time = datetime.datetime.now().time()
     rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
     json_data = {"charge": data}
     cursor = connection_db.cursor()
-    update_query = """Update dynamic_params set params = {} where time = {}""".format(data, time)
-    cursor.execute(update_query)
+    insert_query = """ INSERT INTO dynamic_params (time, params)
+                                        VALUES (%s, %s)"""
+    item_tuple = (time, json.dumps(json_data))
+    cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
-    print(count, "Запись успешно обновлена")
-    # Получить результат
-    cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
-    print("Результат", cursor.fetchall())
+    print(count, "Succesfull update")
+    # Get result
+    # cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
+    # print("Result", cursor.fetchall())
     channel.basic_publish(
         exchange='battery',
         routing_key="UAV_battery",
@@ -303,17 +330,20 @@ def voltage_uav_callback(data):
 
 
 def altitude_uav_callback(data):
+    time = datetime.datetime.now().time()
     rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
     json_data = {"altitude": data}
     cursor = connection_db.cursor()
-    update_query = """Update dynamic_params set params = {} where time = {}""".format(data, time)
-    cursor.execute(update_query)
+    insert_query = """ INSERT INTO dynamic_params (time, params)
+                                        VALUES (%s, %s)"""
+    item_tuple = (time, json.dumps(json_data))
+    cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
-    print(count, "Запись успешно обновлена")
-    # Получить результат
-    cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
-    print("Результат", cursor.fetchall())
+    print(count, "Succesfull update")
+    # Get result
+    # cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
+    # print("Result", cursor.fetchall())
     channel.basic_publish(
         exchange='altitude',
         routing_key="UAV_altitude",

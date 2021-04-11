@@ -8,6 +8,7 @@ from mavros_msgs.msg import Altitude
 import pika
 import psycopg2
 from psycopg2 import Error
+import datetime
 
 credentials = pika.PlainCredentials('admin', 'admin')
 connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.0.33',
@@ -26,11 +27,11 @@ channel.exchange_declare("altitude", exchange_type='topic', passive=False,
                          durable=False, auto_delete=False, arguments=None)
 
 connection_db = psycopg2.connect(user="postgres",
-                              # пароль, который указали при установке PostgreSQL
                               password="1111",
                               host="127.0.0.1",
                               port="5432",
                               database="postgres_db")
+
 
 def local_position_uav_callback(data):
     rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)

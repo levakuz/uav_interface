@@ -9,7 +9,7 @@ connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.0.33',
                                                                credentials))
 connection_db = psycopg2.connect(user="postgres",
                               # пароль, который указали при установке PostgreSQL
-                              password="1111",
+                              password="vfvfcdtnf",
                               host="127.0.0.1",
                               port="5432",
                               database="postgres_db")

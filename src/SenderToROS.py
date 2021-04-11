@@ -7,6 +7,8 @@ from std_msgs.msg import Float64
 import psycopg2
 from psycopg2 import Error
 import pika
+import datetime
+
 
 credentials = pika.PlainCredentials('admin', 'admin')
 connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.0.33',
@@ -57,15 +59,16 @@ channel.queue_declare(queue='UAV_altitude', durable=False)
 
 connection_db = psycopg2.connect(user="postgres",
                               # пароль, который указали при установке PostgreSQL
-                              password="1111",
+                              password="vfvfcdtnf",
                               host="127.0.0.1",
                               port="5432",
                               database="postgres_db")
 
-time = ""
+
 
 
 def goal_co_callback(ch, method, properties, body):
+    time = datetime.datetime.now().time()
     pub = rospy.Publisher('/sim_target/waypoint', Pose, queue_size=10)
     rospy.init_node('goal_co_interface_pub', anonymous=True)
     data = Pose()
@@ -77,29 +80,37 @@ def goal_co_callback(ch, method, properties, body):
     data.orientation.z = body["angles"]["z"]
     data.orientation.w = body["angles"]["w"]
     pub.publish(data)
+    cursor = connection_db.cursor()
+    insert_query = """ INSERT INTO dynamic_params (time, params)
+                                           VALUES (%s, %s)"""
+    item_tuple = (time, body)
+    cursor.execute(insert_query, item_tuple)
+    connection_db.commit()
+    count = cursor.rowcount
+    print(count, "Succesfull update")
 
 
 def wind_velocity(ch, method, properties, body):
     """Option 1"""
+    time = datetime.datetime.now().time()
     pub = rospy.Publisher('/wind/velocity', Float64, queue_size=10)
     rospy.init_node('wind_velocity_interface_pub', anonymous=True)
     data = Float64()
     data.data = body["velocity"]
     pub.publish(data)
-
     cursor = connection_db.cursor()
-    update_query = """Update environment set wind_vel = {} where time = {}""".format(data, time)
-    cursor.execute(update_query)
+    insert_query = """ INSERT INTO environment (time, wind_vel)
+                                           VALUES (%s, %s)"""
+    item_tuple = (time, body["velocity"])
+    cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
-    print(count, "Запись успешно обновлена")
-    # Получить результат
-    cursor.execute("SELECT * from environment")
-    print("Результат", cursor.fetchall())
+    print(count, "Succesfull update")
 
 
 def wind_direction_callback(ch, method, properties, body):
     """ Option 2"""
+    time = datetime.datetime.now().time()
     pub = rospy.Publisher('/wind/direction', Pose, queue_size=10)
     rospy.init_node('wind_direction_interface_pub', anonymous=True)
     data = Pose()
@@ -110,17 +121,17 @@ def wind_direction_callback(ch, method, properties, body):
     pub.publish(data)
 
     cursor = connection_db.cursor()
-    update_query = """Update environment set wind_coords = {} where time = {}""".format(data, time)
-    cursor.execute(update_query)
+    insert_query = """ INSERT INTO environment (time, wind_coords)
+                                           VALUES (%s, %s)"""
+    item_tuple = (time, body)
+    cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
-    print(count, "Запись успешно обновлена")
-    # Получить результат
-    cursor.execute("SELECT * from environment")
-    print("Результат", cursor.fetchall())
+    print(count, "Succesfull update")
 
 
 def temperature_callback(ch, method, properties, body):
+    time = datetime.datetime.now().time()
     pub = rospy.Publisher('/temperature/temp_var', Float64, queue_size=10)
     rospy.init_node('temperature_interface_pub', anonymous=True)
     data = Float64()
@@ -128,14 +139,13 @@ def temperature_callback(ch, method, properties, body):
     pub.publish(data)
 
     cursor = connection_db.cursor()
-    update_query = """Update environment set temp = {} where time = {}""".format(data, time)
-    cursor.execute(update_query)
+    insert_query = """ INSERT INTO environment (time, temp)
+                                           VALUES (%s, %s)"""
+    item_tuple = (time, body["temperature"])
+    cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
-    print(count, "Запись успешно обновлена")
-    # Получить результат
-    cursor.execute("SELECT * from environment")
-    print("Результат", cursor.fetchall())
+    print(count, "Succesfull update")
 
 
 def altitude_uav_callback(ch, method, properties, body):
