@@ -55,9 +55,7 @@ channel.queue_bind(exchange='altitude', queue='UAV_altitude', routing_key='UAV_a
 channel.queue_declare(queue='UAV_altitude', durable=False)
 
 
-
-
-connection = psycopg2.connect(user="postgres",
+connection_db = psycopg2.connect(user="postgres",
                               # пароль, который указали при установке PostgreSQL
                               password="1111",
                               host="127.0.0.1",
@@ -89,14 +87,14 @@ def wind_velocity(ch, method, properties, body):
     data.data = body["velocity"]
     pub.publish(data)
 
-    cursor = connection.cursor()
+    cursor = connection_db.cursor()
     update_query = """Update environment set wind_vel = {} where time = {}""".format(data, time)
     cursor.execute(update_query)
-    connection.commit()
+    connection_db.commit()
     count = cursor.rowcount
     print(count, "Запись успешно обновлена")
     # Получить результат
-    cursor.execute("SELECT * from mobile")
+    cursor.execute("SELECT * from environment")
     print("Результат", cursor.fetchall())
 
 
@@ -111,14 +109,14 @@ def wind_direction_callback(ch, method, properties, body):
     data.direction.z = body["direction"]["z"]
     pub.publish(data)
 
-    cursor = connection.cursor()
+    cursor = connection_db.cursor()
     update_query = """Update environment set wind_coords = {} where time = {}""".format(data, time)
     cursor.execute(update_query)
-    connection.commit()
+    connection_db.commit()
     count = cursor.rowcount
     print(count, "Запись успешно обновлена")
     # Получить результат
-    cursor.execute("SELECT * from mobile")
+    cursor.execute("SELECT * from environment")
     print("Результат", cursor.fetchall())
 
 
@@ -129,14 +127,14 @@ def temperature_callback(ch, method, properties, body):
     data.data = body["temperature"]
     pub.publish(data)
 
-    cursor = connection.cursor()
+    cursor = connection_db.cursor()
     update_query = """Update environment set temp = {} where time = {}""".format(data, time)
     cursor.execute(update_query)
-    connection.commit()
+    connection_db.commit()
     count = cursor.rowcount
     print(count, "Запись успешно обновлена")
     # Получить результат
-    cursor.execute("SELECT * from mobile")
+    cursor.execute("SELECT * from environment")
     print("Результат", cursor.fetchall())
 
 

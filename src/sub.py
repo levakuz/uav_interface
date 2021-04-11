@@ -33,14 +33,14 @@ channel.exchange_declare("battery", exchange_type='topic', passive=False,
 channel.exchange_declare("goals", exchange_type='topic', passive=False,
                          durable=False, auto_delete=False, arguments=None)
 
-connection = psycopg2.connect(user="postgres",
+connection_db = psycopg2.connect(user="postgres",
                               # пароль, который указали при установке PostgreSQL
                               password="1111",
                               host="127.0.0.1",
                               port="5432",
                               database="postgres_db")
 
-
+time = 0
 def pose_co_callback(data):
     rospy.loginfo(rospy.get_caller_id() + "I heard %s", data)
     json_data = {"coordinates": {}, "angles": {}}
@@ -52,10 +52,10 @@ def pose_co_callback(data):
     json_data["angles"]["z"] = data.orientation.z
     json_data["angles"]["w"] = data.orientation.w
     print(json_data)
-    cursor = connection.cursor()
+    cursor = connection_db.cursor()
     update_query = """Update dynamic_params set params = {} where time = {}""".format(data, time)
     cursor.execute(update_query)
-    connection.commit()
+    connection_db.commit()
     count = cursor.rowcount
     print(count, "Запись успешно обновлена")
     # Получить результат
@@ -80,10 +80,10 @@ def goal_co_callback(data):
     json_data["angles"]["y"] = data.orientation.y
     json_data["angles"]["z"] = data.orientation.z
     json_data["angles"]["w"] = data.orientation.w
-    cursor = connection.cursor()
+    cursor = connection_db.cursor()
     update_query = """Update dynamic_params set params = {} where time = {}""".format(data, time)
     cursor.execute(update_query)
-    connection.commit()
+    connection_db.commit()
     count = cursor.rowcount
     print(count, "Запись успешно обновлена")
     # Получить результат
@@ -111,10 +111,10 @@ def trajectory_co_callback(data):
         point_data["angles"]["z"] = point.orientation.z
         point_data["angles"]["w"] = point.orientation.w
         json_data.append(point_data)
-    cursor = connection.cursor()
+    cursor = connection_db.cursor()
     update_query = """Update dynamic_params set params = {} where time = {}""".format(data, time)
     cursor.execute(update_query)
-    connection.commit()
+    connection_db.commit()
     count = cursor.rowcount
     print(count, "Запись успешно обновлена")
     # Получить результат
@@ -138,10 +138,10 @@ def cmd_vel_co_callback(data):
     vel_data["angular"]["x"] = data.angular.x
     vel_data["angular"]["y"] = data.angular.y
     vel_data["angular"]["z"] = data.angular.z
-    cursor = connection.cursor()
+    cursor = connection_db.cursor()
     update_query = """Update dynamic_params set params = {} where time = {}""".format(data, time)
     cursor.execute(update_query)
-    connection.commit()
+    connection_db.commit()
     count = cursor.rowcount
     print(count, "Запись успешно обновлена")
     # Получить результат
@@ -160,10 +160,10 @@ def wind_velocity(data):
     """Option 1"""
     rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
     vel_data = {"velocity": data}
-    cursor = connection.cursor()
+    cursor = connection_db.cursor()
     update_query = """Update environment set wind_vel = {} where time = {}""".format(data, time)
     cursor.execute(update_query)
-    connection.commit()
+    connection_db.commit()
     count = cursor.rowcount
     print(count, "Запись успешно обновлена")
     # Получить результат
@@ -186,10 +186,10 @@ def wind_direction_callback(data):
     vel_data["direction"]["x"] = data.direction.x
     vel_data["direction"]["y"] = data.direction.y
     vel_data["direction"]["z"] = data.direction.z
-    cursor = connection.cursor()
+    cursor = connection_db.cursor()
     update_query = """Update environment set wind_coords = {} where time = {}""".format(data, time)
     cursor.execute(update_query)
-    connection.commit()
+    connection_db.commit()
     count = cursor.rowcount
     print(count, "Запись успешно обновлена")
     # Получить результат
@@ -207,10 +207,10 @@ def wind_direction_callback(data):
 def temperature_callback(data):
     rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
     temp_data = {"temperature": data}
-    cursor = connection.cursor()
+    cursor = connection_db.cursor()
     update_query = """Update environment set temp = {} where time = {}""".format(data, time)
     cursor.execute(update_query)
-    connection.commit()
+    connection_db.commit()
     count = cursor.rowcount
     print(count, "Запись успешно обновлена")
     # Получить результат
@@ -235,10 +235,10 @@ def local_position_uav_callback(data):
     json_data["angles"]["y"] = data.orientation.y
     json_data["angles"]["z"] = data.orientation.z
     json_data["angles"]["w"] = data.orientation.w
-    cursor = connection.cursor()
+    cursor = connection_db.cursor()
     update_query = """Update dynamic_params set params = {} where time = {}""".format(data, time)
     cursor.execute(update_query)
-    connection.commit()
+    connection_db.commit()
     count = cursor.rowcount
     print(count, "Запись успешно обновлена")
     # Получить результат
@@ -263,10 +263,10 @@ def global_position_uav_callback(data):
     json_data["angles"]["y"] = data.orientation.y
     json_data["angles"]["z"] = data.orientation.z
     json_data["angles"]["w"] = data.orientation.w
-    cursor = connection.cursor()
+    cursor = connection_db.cursor()
     update_query = """Update dynamic_params set params = {} where time = {}""".format(data, time)
     cursor.execute(update_query)
-    connection.commit()
+    connection_db.commit()
     count = cursor.rowcount
     print(count, "Запись успешно обновлена")
     # Получить результат
@@ -284,10 +284,10 @@ def global_position_uav_callback(data):
 def voltage_uav_callback(data):
     rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
     json_data = {"charge": data}
-    cursor = connection.cursor()
+    cursor = connection_db.cursor()
     update_query = """Update dynamic_params set params = {} where time = {}""".format(data, time)
     cursor.execute(update_query)
-    connection.commit()
+    connection_db.commit()
     count = cursor.rowcount
     print(count, "Запись успешно обновлена")
     # Получить результат
@@ -305,10 +305,10 @@ def voltage_uav_callback(data):
 def altitude_uav_callback(data):
     rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
     json_data = {"altitude": data}
-    cursor = connection.cursor()
+    cursor = connection_db.cursor()
     update_query = """Update dynamic_params set params = {} where time = {}""".format(data, time)
     cursor.execute(update_query)
-    connection.commit()
+    connection_db.commit()
     count = cursor.rowcount
     print(count, "Запись успешно обновлена")
     # Получить результат
@@ -337,7 +337,6 @@ def listener():
     rospy.Subscriber("/wind/velocity", Float64, wind_velocity)
     rospy.Subscriber("/wind/direction", Pose, wind_direction_callback)
     rospy.Subscriber("/temperature/temp_var", Float64, temperature_callback)
-    rospy.Subscriber("/pressure/pressure_var", Float64, pressure_callback)
     rospy.Subscriber("/mavros/local_position", Pose, local_position_uav_callback)
     rospy.Subscriber("/mavros/global_position", Pose, global_position_uav_callback)
     rospy.Subscriber("/mavros/battery", Float64, voltage_uav_callback)
@@ -349,3 +348,4 @@ def listener():
 
 if __name__ == '__main__':
     listener()
+    channel.start_consuming()

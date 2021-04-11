@@ -25,7 +25,7 @@ channel.exchange_declare("battery", exchange_type='topic', passive=False,
 channel.exchange_declare("altitude", exchange_type='topic', passive=False,
                          durable=False, auto_delete=False, arguments=None)
 
-connection = psycopg2.connect(user="postgres",
+connection_db = psycopg2.connect(user="postgres",
                               # пароль, который указали при установке PostgreSQL
                               password="1111",
                               host="127.0.0.1",
