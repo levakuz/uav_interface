@@ -163,6 +163,8 @@ include_directories(
  catkin_install_python(PROGRAMS
    src/uav_listener.py
    src/sub.py
+   src/SenderToROS.py
+   src/takeoff.py 
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
