@@ -4,7 +4,7 @@ from waitress import serve
 import json
 connection_db = psycopg2.connect(user="postgres",
                               password="password",
-                              host="127.0.0.1",
+                              host="192.168.0.17",
                               port="5432",
                               database="postgres")
 
@@ -294,7 +294,7 @@ def uavs(id):
 
 
 @app.route('/uav_type/<id>/')
-def uavs(id):
+def uavs_type(id):
     cursor = connection_db.cursor()
     insert_query = """ SELECT * FROM co WHERE uav_type = '{}';
                         """.format(id)
