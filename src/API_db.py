@@ -3,10 +3,10 @@ import psycopg2
 from waitress import serve
 import json
 connection_db = psycopg2.connect(user="postgres",
-                              password="vfvfcdtnf",
+                              password="password",
                               host="127.0.0.1",
                               port="5432",
-                              database="postgres_db")
+                              database="postgres")
 
 app = Flask(__name__)
 
