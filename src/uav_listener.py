@@ -102,7 +102,7 @@ def global_position_uav_callback(data):
         if old_global_data != json_data:
             channel.basic_publish(
                 exchange='geoposition',
-                routing_key="UAV_local",
+                routing_key="UAV_global",
                 body=json.dumps(json_data),
                 properties=pika.BasicProperties(
                     delivery_mode=2,
@@ -161,7 +161,7 @@ def voltage_uav_callback(data):
         if old_voltage_data != voltage:
             channel.basic_publish(
                 exchange='battery',
-                routing_key="UAV_global",
+                routing_key="UAV_voltage",
                 body=json.dumps(json_data),
                 properties=pika.BasicProperties(
                     delivery_mode=2,
@@ -198,7 +198,7 @@ def altitude_uav_callback(data):
         if altitude_old_data != altitude:
             channel.basic_publish(
                 exchange='altitude',
-                routing_key="UAV_global",
+                routing_key="UAV_altitude",
                 body=json.dumps(json_data),
                 properties=pika.BasicProperties(
                     delivery_mode=2,
