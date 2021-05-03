@@ -131,7 +131,6 @@ def db_response(ch, method, properties, body):
     else:
         cursor.execute(body["sql"])
         data = cursor.fetchall()
-        data = cursor.fetchall()
     ch.basic_publish(exchange='',
                      routing_key=properties.reply_to,
                      properties=pika.BasicProperties(correlation_id= \

@@ -23,8 +23,7 @@ channel.exchange_declare("direction", exchange_type='topic', passive=False,
                          durable=False, auto_delete=False, arguments=None)
 channel.exchange_declare("temperature", exchange_type='topic', passive=False,
                          durable=False, auto_delete=False, arguments=None)
-channel.exchange_declare("pressure", exchange_type='topic', passive=False,
-                         durable=False, auto_delete=False, arguments=None)
+
 
 connection = psycopg2.connect(user="postgres",
                               # пароль, который указали при установке PostgreSQL
@@ -46,7 +45,6 @@ def wind_velocity(data):
         properties=pika.BasicProperties(
             delivery_mode=2,
         ))
-
 
 
 def wind_direction_callback(data):
@@ -78,19 +76,6 @@ def temperature_callback(data):
         ))
 
 
-def pressure_callback(data):
-    rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
-    pres_data = {"pressure": data.data}
-    print(pres_data)
-    channel.basic_publish(
-        exchange='pressure',
-        routing_key="",
-        body=json.dumps(pres_data),
-        properties=pika.BasicProperties(
-            delivery_mode=2,
-        ))
-
-
 def listener():
     # In ROS, nodes are uniquely named. If two nodes with the same
     # name are launched, the previous one is kicked off. The
@@ -101,7 +86,6 @@ def listener():
     rospy.Subscriber("/wind/velocity", Float64, wind_velocity)
     rospy.Subscriber("/wind/diection", Pose, wind_direction_callback)
     rospy.Subscriber("/temperature/temp_var", Float64, temperature_callback)
-    rospy.Subscriber("/pressure/pressure_var", Float64, pressure_callback)
     rospy.spin()
 
 

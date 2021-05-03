@@ -1,5 +1,4 @@
 import time
-
 import pika
 import psycopg2
 import json
@@ -11,7 +10,6 @@ connection = pika.BlockingConnection(pika.ConnectionParameters('127.0.0.1',
                                                                credentials,blocked_connection_timeout=0,heartbeat=0))
 
 channel = connection.channel()
-# print(channel)
 
 channel.exchange_declare("geoposition", exchange_type='topic', passive=False,
                          durable=False, auto_delete=False, arguments=None)
