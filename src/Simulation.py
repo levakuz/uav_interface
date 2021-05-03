@@ -4,7 +4,7 @@ import psycopg2
 import json
 import random
 credentials = pika.PlainCredentials('admin', 'admin')
-connection = pika.BlockingConnection(pika.ConnectionParameters('127.0.0.1',
+connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.0.17',
                                                                5672,
                                                                '/',
                                                                credentials,blocked_connection_timeout=0,heartbeat=0))
