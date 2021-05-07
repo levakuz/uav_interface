@@ -33,14 +33,14 @@ local_angle_w = 0
 lattitude = random.randrange(0,200)
 longtitude = random.randrange(0, 200)
 
-voltage = random.randrange(0, 50)
+voltage = 100
 altitude = random.randrange(20, 50)
 
 new_localx = localx
 new_localy = localy
 new_lattitude = lattitude
 new_longtitude = longtitude
-
+new_voltage = voltage
 
 def send_locals(localx, localy, localz, local_angle_x, local_angle_y, local_angle_z, local_angle_w):
     time = datetime.datetime.now()
@@ -235,9 +235,11 @@ while True:
         new_localy = localy
         new_lattitude = lattitude
         new_longtitude = longtitude
-    send_locals(new_localx, new_localy ,localz, local_angle_x, local_angle_y,local_angle_z,local_angle_w)
+    if voltage != 0:
+        new_voltage -= 1
+    send_locals(new_localx, new_localy, localz, local_angle_x, local_angle_y, local_angle_z, local_angle_w)
     send_global(new_lattitude, new_longtitude, altitude)
-    send_voltage(voltage)
+    send_voltage(new_voltage)
     send_altitude(altitude)
     time.sleep(5)
 
