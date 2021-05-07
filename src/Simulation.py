@@ -45,7 +45,7 @@ new_longtitude = longtitude
 def send_locals(localx, localy, localz, local_angle_x, local_angle_y, local_angle_z, local_angle_w):
     time = datetime.datetime.now()
     uav_id = random.randrange(1,4)
-    json_data = {"id": uav_id, "coordinates": {}, "angles": {}}
+    json_data = {"coordinates": {}, "angles": {}}
     if uav_id == 1:
         json_data["coordinates"]["x"] = '{:.2f}'.format(localx)
         json_data["coordinates"]["y"] = '{:.2f}'.format(localy)
@@ -63,13 +63,16 @@ def send_locals(localx, localy, localz, local_angle_x, local_angle_y, local_angl
         json_data["angles"]["z"] = '{:.2f}'.format(local_angle_z + uav_id)
         json_data["angles"]["w"] = '{:.2f}'.format(local_angle_w)
     print(json_data)
+    message = json_data.copy()
+    message["id"] = uav_id
     channel.basic_publish(
         exchange='UAV',
         routing_key="geoposition_local",
-        body=json.dumps(json_data),
+        body=json.dumps(message),
         properties=pika.BasicProperties(
             delivery_mode=2,
         ))
+    print(json_data)
     try:
         cursor = connection_db.cursor()
         insert_query = """ UPDATE uav_dynamic_params SET coords = '{}' WHERE time = '{}' AND id = {};
@@ -98,15 +101,17 @@ def send_locals(localx, localy, localz, local_angle_x, local_angle_y, local_angl
 def send_global(lattitude, longtitude, altitude):
     time = datetime.datetime.now()
     json_data = {}
-    json_data["id"] = 1
+
     json_data["lattitude"] = lattitude
     json_data["longtitude"] = longtitude
     json_data["altitude"] = altitude
     print(json_data)
+    message = json_data.copy()
+    message["id"] = 1
     channel.basic_publish(
         exchange='UAV',
         routing_key="geoposition_global",
-        body=json.dumps(json_data),
+        body=json.dumps(message),
         properties=pika.BasicProperties(
             delivery_mode=2,
         ))
@@ -139,7 +144,8 @@ def send_altitude(altitude):
     time = datetime.datetime.now()
     uav_id = random.randrange(1, 4)
     json_data = {}
-    json_data["id"] = uav_id
+    message = json_data.copy()
+    message["id"] = 1
     if uav_id == 1:
         json_data["altitude"] = altitude
     else:
@@ -147,7 +153,7 @@ def send_altitude(altitude):
     channel.basic_publish(
         exchange='UAV',
         routing_key="altitude",
-        body=json.dumps(json_data),
+        body=json.dumps(message),
         properties=pika.BasicProperties(
             delivery_mode=2,
         ))
@@ -181,12 +187,13 @@ def send_voltage(voltage):
     time = datetime.datetime.now()
     uav_id = random.randrange(1, 4)
     json_data = {}
-    json_data["id"] = uav_id
     json_data["battery"] = voltage
+    message = json_data.copy()
+    message["id"] = uav_id
     channel.basic_publish(
         exchange='UAV',
         routing_key="battery",
-        body=json.dumps(json_data),
+        body=json.dumps(message),
         properties=pika.BasicProperties(
             delivery_mode=2,
         ))
