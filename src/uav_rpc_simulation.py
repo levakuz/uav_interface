@@ -134,12 +134,15 @@ channel.queue_declare(queue='uav_global_pose_rpc', durable=False)
 channel.queue_declare(queue='uav_altitude_rpc', durable=False)
 channel.queue_declare(queue='uav_battery_rpc', durable=False)
 channel.queue_declare(queue='uav_all_parametrs_rpc', durable=False)
+channel.queue_declare(queue='show_uav_ids_rpc', durable=False)
 
 channel.basic_consume(queue='uav_local_pose_rpc', on_message_callback=uav_local_pose_rpc, auto_ack=True)
 channel.basic_consume(queue='uav_global_pose_rpc', on_message_callback=uav_global_pose_rpc, auto_ack=True)
 channel.basic_consume(queue='uav_altitude_rpc', on_message_callback=uav_altitude_rpc, auto_ack=True)
 channel.basic_consume(queue='uav_battery_rpc', on_message_callback=uav_battery_rpc, auto_ack=True)
 channel.basic_consume(queue='uav_all_parametrs_rpc', on_message_callback=uav_all_parametrs_rpc, auto_ack=True)
+channel.basic_consume(queue='show_uav_ids_rpc', on_message_callback=show_uav_ids_rpc, auto_ack=True)
+
 channel.start_consuming()
 
 
