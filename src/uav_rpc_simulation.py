@@ -262,7 +262,7 @@ channel.basic_consume(queue='uav_battery_rpc', on_message_callback=uav_battery_r
 channel.basic_consume(queue='uav_all_parametrs_rpc', on_message_callback=uav_all_parametrs_rpc, auto_ack=True)
 channel.basic_consume(queue='show_uav_ids_rpc', on_message_callback=show_uav_ids_rpc, auto_ack=True)
 
-# channel.start_consuming()
+channel.start_consuming()
 
 
 # final_json = {}
