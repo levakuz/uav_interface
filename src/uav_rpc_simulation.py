@@ -39,16 +39,31 @@ def show_uav_ids_rpc(ch, method, properties, body):
 
 
 def uav_all_parametrs_rpc(ch, method, properties, body):
-    cursor = connection_db.cursor()
-    insert_query = """ SELECT DISTINCT id FROM uav_dynamic_params;
+    message = json.loads(body)
+    if message["id"]:
+        if message["time"] == "last":
+            final_json = find_timestamp_last(message["id"])
+
+        else:
+            final_json = find_timestamp(message["id"], message["time"])
+    else:
+        cursor = connection_db.cursor()
+        insert_query = """ SELECT DISTINCT id FROM uav_dynamic_params;
                                            """
-    cursor.execute(insert_query)
-    record = cursor.fetchall()
-    final_json = {}
-    for i in record:
-        jsonlist = find_timestamp(i[0])
-        final_json[i[0]] = jsonlist
-    print(final_json)
+        cursor.execute(insert_query)
+        record = cursor.fetchall()
+        if message["time"] == "last":
+            final_json = {}
+            for i in record:
+                jsonlist = find_timestamp_last(i[0])
+                final_json[i[0]] = jsonlist
+            print(final_json)
+        else:
+            final_json = {}
+            for i in record:
+                jsonlist = find_timestamp(i[0], message["time"])
+                final_json[i[0]] = jsonlist
+            print(final_json)
     ch.basic_publish(exchange='',
                      routing_key=properties.reply_to,
                      properties=pika.BasicProperties(correlation_id= \
@@ -263,7 +278,7 @@ channel.basic_consume(queue='show_uav_ids_rpc', on_message_callback=show_uav_ids
 
 def find_timestamp(id, time):
     cursor = connection_db.cursor()
-    insert_query = """ SELECT * FROM uav_dynamic_params WHERE time >= '{}' and id  = {} ORDER BY time DESC;
+    insert_query = """ SELECT * FROM uav_dynamic_params WHERE time <= '{}' and id  = {} ORDER BY time DESC;
                                            """.format(time ,id)
     cursor.execute(insert_query)
     record = cursor.fetchone()
@@ -274,7 +289,7 @@ def find_timestamp(id, time):
     json_list["time"] = record[0].strftime("%H:%M:%S")
     if json_list["coords"] is None:
         cursor = connection_db.cursor()
-        insert_query = """ SELECT coords FROM uav_dynamic_params WHERE time >= '{}' AND id = '{}' AND coords is not null ORDER BY time DESC;
+        insert_query = """ SELECT coords FROM uav_dynamic_params WHERE time <= '{}' AND id = '{}' AND coords is not null ORDER BY time DESC;
                                                """.format(time, id)
         cursor.execute(insert_query)
         record = cursor.fetchone()
@@ -284,7 +299,7 @@ def find_timestamp(id, time):
 
     if json_list["altitude"] is None:
         cursor = connection_db.cursor()
-        insert_query = """ SELECT altitude FROM uav_dynamic_params WHERE time >= '{}' AND id = '{}' AND altitude is not null ORDER BY time DESC;
+        insert_query = """ SELECT altitude FROM uav_dynamic_params WHERE time <= '{}' AND id = '{}' AND altitude is not null ORDER BY time DESC;
                                                """.format(time, id)
         cursor.execute(insert_query)
         record = cursor.fetchone()
@@ -294,7 +309,7 @@ def find_timestamp(id, time):
 
     if json_list["global_coords"] is None:
         cursor = connection_db.cursor()
-        insert_query = """ SELECT global_coords FROM uav_dynamic_params WHERE time >= '{}' AND id = '{}' AND global_coords is not null ORDER BY time DESC;
+        insert_query = """ SELECT global_coords FROM uav_dynamic_params WHERE time <= '{}' AND id = '{}' AND global_coords is not null ORDER BY time DESC;
                                                """.format(time, id)
         cursor.execute(insert_query)
         record = cursor.fetchone()
@@ -303,7 +318,7 @@ def find_timestamp(id, time):
 
     if json_list["battery"] is None:
         cursor = connection_db.cursor()
-        insert_query = """ SELECT battery FROM uav_dynamic_params WHERE time >= '{}' AND id = '{}' AND battery is not null ORDER BY time DESC;
+        insert_query = """ SELECT battery FROM uav_dynamic_params WHERE time <= '{}' AND id = '{}' AND battery is not null ORDER BY time DESC;
                                                """.format(time, id)
         cursor.execute(insert_query)
         record = cursor.fetchone()
@@ -315,5 +330,57 @@ def find_timestamp(id, time):
     return json_list
 
 
+def find_timestamp_last(id):
+    cursor = connection_db.cursor()
+    insert_query = """ SELECT * FROM uav_dynamic_params WHERE time >= '{}' and id  = {} ORDER BY time DESC;
+                                           """.format("00:00" ,id)
+    cursor.execute(insert_query)
+    record = cursor.fetchone()
+    final_json = {}
+    # for record in records:
+    # print(record)
+    json_list = {'coords': record[2], 'altitude': record[3], 'battery': record[4], 'global_coords': record[5]}
+    json_list["time"] = record[0].strftime("%H:%M:%S")
+    if json_list["coords"] is None:
+        cursor = connection_db.cursor()
+        insert_query = """ SELECT coords FROM uav_dynamic_params WHERE time >= '{}' AND id = '{}' AND coords is not null ORDER BY time DESC;
+                                               """.format("00:00", id)
+        cursor.execute(insert_query)
+        record = cursor.fetchone()
+        json_list["coords"] = record[0]
+    # else:
+        # json_list["coords"] = json_list["coords"][0]
+
+    if json_list["altitude"] is None:
+        cursor = connection_db.cursor()
+        insert_query = """ SELECT altitude FROM uav_dynamic_params WHERE time >= '{}' AND id = '{}' AND altitude is not null ORDER BY time DESC;
+                                               """.format("00:00", id)
+        cursor.execute(insert_query)
+        record = cursor.fetchone()
+        json_list["altitude"] = record[0]
+    # else:
+    #     json_list["altitude"] = json_list["altitude"][0]
+
+    if json_list["global_coords"] is None:
+        cursor = connection_db.cursor()
+        insert_query = """ SELECT global_coords FROM uav_dynamic_params WHERE time >= '{}' AND id = '{}' AND global_coords is not null ORDER BY time DESC;
+                                               """.format("00:00", id)
+        cursor.execute(insert_query)
+        record = cursor.fetchone()
+        json_list["global_coords"] = record
+
+
+    if json_list["battery"] is None:
+        cursor = connection_db.cursor()
+        insert_query = """ SELECT battery FROM uav_dynamic_params WHERE time >= '{}' AND id = '{}' AND battery is not null ORDER BY time DESC;
+                                               """.format("00:00", id)
+        cursor.execute(insert_query)
+        record = cursor.fetchone()
+        json_list["battery"] = record[0]
+    # else:
+    #     json_list["battery"] = json_list["battery"][0]
+
+    print(json_list)
+    return json_list
 
 
