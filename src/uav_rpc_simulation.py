@@ -369,8 +369,6 @@ def uav_battery_rpc(ch, method, properties, body):
                              body=json.dumps(record))
 
 
-
-
 channel.queue_declare(queue='uav_local_pose_rpc', durable=False)
 channel.queue_declare(queue='uav_global_pose_rpc', durable=False)
 channel.queue_declare(queue='uav_altitude_rpc', durable=False)
