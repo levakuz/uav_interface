@@ -38,7 +38,6 @@ def add_uav_type_rpc(ch, method, properties, body):
         cursor.execute(insert_query, item_tuple)
         connection_db.commit()
         status_message["status"] = "success"
-        connection_db.rollback()
         ch.basic_publish(exchange='',
                          routing_key=properties.reply_to,
                          properties=pika.BasicProperties(correlation_id= \
@@ -65,7 +64,7 @@ def get_uav_type_rpc(ch, method, properties, body):
             try:
                 cursor = connection_db.cursor()
                 insert_query = """ SELECT * FROM uav_type WHERE name = '{}';
-                                        """.format("Haha")
+                                        """.format(recived_message["name"])
                 cursor.execute(insert_query)
                 record = cursor.fetchall()
                 print(record)
