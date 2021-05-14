@@ -45,6 +45,7 @@ def find_timestamp(id, time):
             cursor.execute(insert_query)
             record = cursor.fetchone()
             json_list["coords"] = record[0]
+            cursor.close()
         # else:
             # json_list["coords"] = json_list["coords"][0]
 
@@ -55,6 +56,7 @@ def find_timestamp(id, time):
             cursor.execute(insert_query)
             record = cursor.fetchone()
             json_list["altitude"] = record[0]
+            cursor.close()
         # else:
         #     json_list["altitude"] = json_list["altitude"][0]
 
@@ -64,6 +66,7 @@ def find_timestamp(id, time):
                                                    """.format(time, id)
             cursor.execute(insert_query)
             record = cursor.fetchone()
+            cursor.close()
             json_list["global_coords"] = record
 
 
@@ -73,6 +76,7 @@ def find_timestamp(id, time):
                                                    """.format(time, id)
             cursor.execute(insert_query)
             record = cursor.fetchone()
+            cursor.close()
             json_list["battery"] = record[0]
         # else:
         #     json_list["battery"] = json_list["battery"][0]
@@ -87,6 +91,7 @@ def find_timestamp_last(id):
                                            """.format("00:00" ,id)
     cursor.execute(insert_query)
     record = cursor.fetchone()
+    cursor.close()
     final_json = {}
     # for record in records:
     # print(record)
@@ -100,6 +105,7 @@ def find_timestamp_last(id):
                                                    """.format("00:00", id)
             cursor.execute(insert_query)
             record = cursor.fetchone()
+            cursor.close()
             json_list["coords"] = record[0]
         # else:
             # json_list["coords"] = json_list["coords"][0]
@@ -110,6 +116,7 @@ def find_timestamp_last(id):
                                                    """.format("00:00", id)
             cursor.execute(insert_query)
             record = cursor.fetchone()
+            cursor.close()
             json_list["altitude"] = record[0]
         # else:
         #     json_list["altitude"] = json_list["altitude"][0]
@@ -120,6 +127,7 @@ def find_timestamp_last(id):
                                                    """.format("00:00", id)
             cursor.execute(insert_query)
             record = cursor.fetchone()
+            cursor.close()
             json_list["global_coords"] = record
 
 
@@ -129,6 +137,7 @@ def find_timestamp_last(id):
                                                    """.format("00:00", id)
             cursor.execute(insert_query)
             record = cursor.fetchone()
+            cursor.close()
             json_list["battery"] = record[0]
         # else:
         #     json_list["battery"] = json_list["battery"][0]
@@ -138,11 +147,15 @@ def find_timestamp_last(id):
 
 
 def show_uav_ids_rpc(ch, method, properties, body):
+    print(body)
+
+    print("here")
     cursor = connection_db.cursor()
     insert_query = """ SELECT DISTINCT id FROM uav_dynamic_params;
                                            """
     cursor.execute(insert_query)
     record = cursor.fetchall()
+    cursor.close()
     print(json.dumps(record))
     ch.basic_publish(exchange='',
                      routing_key=properties.reply_to,
@@ -152,6 +165,7 @@ def show_uav_ids_rpc(ch, method, properties, body):
 
 
 def uav_all_parametrs_rpc(ch, method, properties, body):
+    final_json = {}
     message = json.loads(body)
     print(message)
     try:
@@ -167,14 +181,13 @@ def uav_all_parametrs_rpc(ch, method, properties, body):
                                            """
         cursor.execute(insert_query)
         record = cursor.fetchall()
+        cursor.close()
         if message["time"] == "last":
-            final_json = {}
             for i in record:
                 jsonlist = find_timestamp_last(i[0])
                 final_json[i[0]] = jsonlist
             print(final_json)
         else:
-            final_json = {}
             for i in record:
                 jsonlist = find_timestamp(i[0], message["time"])
                 final_json[i[0]] = jsonlist
@@ -195,6 +208,7 @@ def uav_local_pose_rpc(ch, method, properties, body):
                                                        """
             cursor.execute(insert_query)
             record = cursor.fetchall()
+            cursor.close()
             final_json = {}
             for i in record:
                 print(i[0])
@@ -203,6 +217,7 @@ def uav_local_pose_rpc(ch, method, properties, body):
                                         """.format("17:30", i[0])
                 cursor.execute(insert_query)
                 records = cursor.fetchall()
+                cursor.close()
                 print(records[0])
                 record = json.loads(records[0][0])
                 record["time"] = records[0][1].strftime("%H:%M:%S")
@@ -220,6 +235,7 @@ def uav_local_pose_rpc(ch, method, properties, body):
                                     """.format(message["id"])
             cursor.execute(insert_query)
             records = cursor.fetchall()
+            cursor.close()
             print(records[0][0])
             record = json.loads(records[0][0])
             record ["time"] = records[0][1].strftime("%H:%M:%S")
@@ -239,6 +255,7 @@ def uav_global_pose_rpc(ch, method, properties, body):
                                                        """
             cursor.execute(insert_query)
             record = cursor.fetchall()
+            cursor.close()
             final_json = {}
             for i in record:
                 print(i[0])
@@ -247,6 +264,7 @@ def uav_global_pose_rpc(ch, method, properties, body):
                                         """.format(message["time"], i[0])
                 cursor.execute(insert_query)
                 records = cursor.fetchall()
+                cursor.close()
                 if records:
                     print(records)
                     record = json.loads(records[0][0])
@@ -265,6 +283,7 @@ def uav_global_pose_rpc(ch, method, properties, body):
                                     """.format(message["id"])
             cursor.execute(insert_query)
             records = cursor.fetchall()
+            cursor.close()
             print(records[0][0])
             record = json.loads(records[0][0])
             record["time"] = records[0][1].strftime("%H:%M:%S")
@@ -284,6 +303,7 @@ def uav_altitude_rpc(ch, method, properties, body):
                                                        """
             cursor.execute(insert_query)
             record = cursor.fetchall()
+            cursor.close()
             final_json = {}
             newrecord = {}
             for i in record:
@@ -293,6 +313,7 @@ def uav_altitude_rpc(ch, method, properties, body):
                                         """.format(message["time"], i[0])
                 cursor.execute(insert_query)
                 records = cursor.fetchall()
+                cursor.close()
                 if records:
                     print(records)
                     newrecord["altitude"] = records[0][0]
@@ -311,6 +332,7 @@ def uav_altitude_rpc(ch, method, properties, body):
                                     """.format(message["id"])
             cursor.execute(insert_query)
             records = cursor.fetchall()
+            cursor.close()
             print(records[0])
             record = {}
             record["altitude"] = records[0][0]
@@ -331,6 +353,7 @@ def uav_battery_rpc(ch, method, properties, body):
                                                        """
             cursor.execute(insert_query)
             record = cursor.fetchall()
+            cursor.close()
             final_json = {}
             newrecord = {}
             for i in record:
@@ -340,6 +363,7 @@ def uav_battery_rpc(ch, method, properties, body):
                                         """.format(message["time"], i[0])
                 cursor.execute(insert_query)
                 records = cursor.fetchall()
+                cursor.close()
                 if records:
                     print(records)
                     newrecord["battery"] = records[0][0]
@@ -358,6 +382,7 @@ def uav_battery_rpc(ch, method, properties, body):
                                     """.format(message["id"])
             cursor.execute(insert_query)
             records = cursor.fetchall()
+            cursor.close()
             print(records[0][0])
             record = {}
             record["battery"] = records[0][0]
@@ -385,16 +410,6 @@ channel.basic_consume(queue='show_uav_ids_rpc', on_message_callback=show_uav_ids
 
 channel.start_consuming()
 
-
-# final_json = {}
-# for record in records:
-#     json_list = {}
-#     print(record)
-#     print(record[2])
-#     json_list["coords"] = json.loads(records[2])
-#     print(json_list)
-# 
-# record["time"] = records[0].strftime("%H:%M:%S")
 
 
 

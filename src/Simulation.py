@@ -80,6 +80,7 @@ def send_locals(localx, localy, localz, local_angle_x, local_angle_y, local_angl
         cursor.execute(insert_query)
         connection_db.commit()
         count = cursor.rowcount
+        cursor.close()
     except Error as e:
         print("error", e)
         count = 0
@@ -93,6 +94,7 @@ def send_locals(localx, localy, localz, local_angle_x, local_angle_y, local_angl
             item_tuple = (time.time().strftime("%H:%M:%S"), uav_id, json.dumps(json_data))
             cursor.execute(insert_query, item_tuple)
             connection_db.commit()
+            cursor.close()
         except Error as e:
             print("error", e)
             connection_db.rollback()
@@ -122,6 +124,7 @@ def send_global(lattitude, longtitude, altitude):
         cursor.execute(insert_query)
         connection_db.commit()
         count = cursor.rowcount
+        cursor.close()
         # print(count, "Succesfull update")
     except Error as e:
         print("error", e)
@@ -135,6 +138,7 @@ def send_global(lattitude, longtitude, altitude):
             item_tuple = (time.time().strftime("%H:%M:%S"), 1, json.dumps(json_data))
             cursor.execute(insert_query, item_tuple)
             connection_db.commit()
+            cursor.close()
         except Error as e:
             print("error", e)
             connection_db.rollback()
@@ -164,6 +168,7 @@ def send_altitude(altitude):
         cursor.execute(insert_query)
         connection_db.commit()
         count = cursor.rowcount
+        cursor.close()
         # print(count, "Succesfull update altitude")
     except Error as e:
         print("error", e)
@@ -178,6 +183,7 @@ def send_altitude(altitude):
             item_tuple = (time.time().strftime("%H:%M:%S"), uav_id, altitude)
             cursor.execute(insert_query, item_tuple)
             connection_db.commit()
+            cursor.close()
         except Error as e:
             print("error", e)
             connection_db.rollback()
@@ -204,6 +210,7 @@ def send_voltage(voltage):
         cursor.execute(insert_query)
         connection_db.commit()
         count = cursor.rowcount
+        cursor.close()
         # print(count, "Succesfull update")
     except Error as e:
         print("error", e)
@@ -217,6 +224,7 @@ def send_voltage(voltage):
             item_tuple = (time.time().strftime("%H:%M:%S"), uav_id, voltage)
             cursor.execute(insert_query, item_tuple)
             connection_db.commit()
+            cursor.close()
         except Error as e:
             print("error", e)
             connection_db.rollback()
@@ -235,8 +243,10 @@ while True:
         new_localy = localy
         new_lattitude = lattitude
         new_longtitude = longtitude
-    if voltage != 0:
+    if new_voltage > 0:
         new_voltage -= 1
+    else:
+        new_voltage = voltage
     send_locals(new_localx, new_localy, localz, local_angle_x, local_angle_y, local_angle_z, local_angle_w)
     send_global(new_lattitude, new_longtitude, altitude)
     send_voltage(new_voltage)

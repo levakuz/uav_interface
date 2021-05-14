@@ -61,6 +61,7 @@ def pose_co_callback(data):
     cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
+    cursor.close()
     print(count, "Succesfull update")
     # print(time)
     # cursor.execute("SELECT * from dynamic_params WHERE time = (%s)", time)
@@ -92,6 +93,7 @@ def goal_co_callback(data):
     cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
+    cursor.close()
     print(count, "Succesfull update")
     # Get result
     # cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
@@ -126,6 +128,7 @@ def trajectory_co_callback(data):
     cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
+    cursor.close()
     print(count, "Succesfull update")
     # Get result
     # cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
@@ -156,6 +159,7 @@ def cmd_vel_co_callback(data):
     cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
+    cursor.close()
     print(count, "Succesfull update")
     # Get result
     # cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
@@ -181,6 +185,7 @@ def wind_velocity(data):
     cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
+    cursor.close()
     print(count, "Succesfull update")
     # Get result
     # cursor.execute("SELECT * from environment where time = {}".format(time))
@@ -210,6 +215,7 @@ def wind_direction_callback(data):
     cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
+    cursor.close()
     print(count, "Succesfull update")
     # print("Result", cursor.fetchall())
     channel.basic_publish(
@@ -232,6 +238,7 @@ def temperature_callback(data):
     cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
+    cursor.close()
     print(count, "Succesfull update")
     # print("Result", cursor.fetchall())
     channel.basic_publish(
@@ -261,6 +268,7 @@ def local_position_uav_callback(data):
     cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
+    cursor.close()
     print(count, "Succesfull update")
     # Get result
     # cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
@@ -292,6 +300,7 @@ def global_position_uav_callback(data):
     cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
+    cursor.close()
     print(count, "Succesfull update")
     # Get result
     # cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
@@ -316,6 +325,7 @@ def voltage_uav_callback(data):
     cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
+    cursor.close()
     print(count, "Succesfull update")
     # Get result
     # cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
@@ -340,6 +350,7 @@ def altitude_uav_callback(data):
     cursor.execute(insert_query, item_tuple)
     connection_db.commit()
     count = cursor.rowcount
+    cursor.close()
     print(count, "Succesfull update")
     # Get result
     # cursor.execute("SELECT * from dynamic_params where time = {}".format(time))
