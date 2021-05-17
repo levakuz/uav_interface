@@ -32,6 +32,7 @@ def add_co_weapon_rpc(ch, method, properties, body):
                       recived_message["range_vertical"], recived_message["rapidity"])
         cursor.execute(insert_query, item_tuple)
         connection_db.commit()
+        cursor.close()
         status_message["status"] = "success"
         ch.basic_publish(exchange='',
                          routing_key=properties.reply_to,
@@ -73,6 +74,7 @@ def get_co_weapon_rpc(ch, method, properties, body):
                             """.format(1)
                 cursor.execute(insert_query)
                 record = cursor.fetchone()
+                cursor.close()
                 print(record)
                 if record:
                     print(record)
@@ -106,6 +108,7 @@ def get_co_weapon_rpc(ch, method, properties, body):
                                                           """
         cursor.execute(insert_query)
         records = cursor.fetchall()
+        cursor.close()
         print(records)
         final_json = {}
         for record in records:
@@ -146,6 +149,7 @@ def delete_co_weapon_rpc (ch, method, properties, body):
                 cursor.execute(insert_query)
                 connection_db.commit()
                 rows_deleted = cursor.rowcount
+                connection_db.commit()
                 if rows_deleted != 0:
                     final_json["status"] = "success"
                     ch.basic_publish(exchange='',

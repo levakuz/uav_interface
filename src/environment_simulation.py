@@ -22,19 +22,6 @@ wind_direction_z = 20
 temperature = 25
 
 
-def wind_velocity(wind_vel_data):
-    """Option 1"""
-    vel_data = {"velocity": wind_vel_data}
-    print(vel_data)
-    channel.basic_publish(
-        exchange='environment',
-        routing_key="wind_vel",
-        body=json.dumps(vel_data),
-        properties=pika.BasicProperties(
-            delivery_mode=2,
-        ))
-
-
 def wind_direction_callback(wind_direction_x, wind_direction_y, wind_direction_z):
     """ Option 2"""
     vel_data = {"direction":{}}
@@ -42,7 +29,18 @@ def wind_direction_callback(wind_direction_x, wind_direction_y, wind_direction_z
     vel_data["direction"]["x"] = wind_direction_x
     vel_data["direction"]["y"] = wind_direction_y
     vel_data["direction"]["z"] = wind_direction_z
-    print(vel_data)
+    try:
+        cursor = connection_db.cursor()
+        insert_query = """ INSERT INTO co_weapon (name, range_horizontal, range_vertical, rapidity)
+            VALUES (%s, %s, %s, %s)"""
+        item_tuple = (recived_message["name"], recived_message["range_horizontal"],
+                      recived_message["range_vertical"], recived_message["rapidity"])
+        cursor.execute(insert_query, item_tuple)
+        connection_db.commit()
+        cursor.close()
+    except Error as e:
+        print("error", e)
+
     channel.basic_publish(
         exchange='environment',
         routing_key="wind_direction",

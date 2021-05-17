@@ -41,6 +41,7 @@ def add_uav_rpc(ch, method, properties, body):
                           recived_message["time_for_prepare"], uav_role)
             cursor.execute(insert_query, item_tuple)
             connection_db.commit()
+            cursor.close()
             status_message["status"] = "success"
             ch.basic_publish(exchange='',
                              routing_key=properties.reply_to,
@@ -79,6 +80,7 @@ def get_uav_rpc(ch, method, properties, body):
                                         """.format(recived_message["tail_number"])
                 cursor.execute(insert_query)
                 record = cursor.fetchone()
+                cursor.close()
                 if record:
                     print(record)
                     final_json["id"] = record[-2]
@@ -153,6 +155,7 @@ def delete_uav_rpc(ch, method, properties, body):
                 cursor.execute(insert_query)
                 connection_db.commit()
                 rows_deleted = cursor.rowcount
+                cursor.close()
                 if rows_deleted != 0:
                     final_json["status"] = "success"
                     ch.basic_publish(exchange='',
