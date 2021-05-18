@@ -148,7 +148,8 @@ def find_timestamp_last(id):
 
 def show_uav_ids_rpc(ch, method, properties, body):
     print(body)
-
+    final_json = {}
+    id_list = []
     print("here")
     cursor = connection_db.cursor()
     insert_query = """ SELECT DISTINCT id FROM uav_dynamic_params;
@@ -156,12 +157,17 @@ def show_uav_ids_rpc(ch, method, properties, body):
     cursor.execute(insert_query)
     record = cursor.fetchall()
     cursor.close()
+    print(record[0][0])
+    for i in range(len(record)):
+        id_list.append(record[i][0])
+
+    final_json["id"] = id_list
     print(json.dumps(record))
     ch.basic_publish(exchange='',
                      routing_key=properties.reply_to,
                      properties=pika.BasicProperties(correlation_id= \
                                                          properties.correlation_id),
-                     body=json.dumps(record))
+                     body=json.dumps(final_json))
 
 
 def uav_all_parametrs_rpc(ch, method, properties, body):

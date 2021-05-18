@@ -1,18 +1,17 @@
 import rospy
 import json
-from geometry_msgs.msg import Quaternion, PoseStamped
-from sensor_msgs.msg import BatteryState
-from mavros_msgs.msg import Altitude
-from sensor_msgs.msg import NavSatFix
+from geometry_msgs.msg import Quaternion, PoseStamped, Twist
+from rsm_msgs.msg import WaypointArray
 import pika
 import psycopg2
 from psycopg2 import Error
 import datetime
 
 class GcClass(object):
-    def __init__(self, co_id, username_rmq, password_rmq, ip_rmq, db_username, db_password, db_ip, db_name,
+    def __init__(self, name, co_id, username_rmq, password_rmq, ip_rmq, db_username, db_password, db_ip, db_name,
                  time_interval):
         """Constructor"""
+        self.name = name
         self.username_rmq = username_rmq
         self.password_rmq = password_rmq
         self.ip_rmq = ip_rmq
@@ -332,15 +331,14 @@ class GcClass(object):
                 self.old_velocity_data = json_data
         # rospy.sleep(5)
 
-
     def listener(self):
         # rospy.Subscriber("/mavros/local_position/pose", PoseStamped, local_position_uav_callback)
         # rospy.Subscriber("/mavros/global_position/global", PoseStamped, global_position_uav_callback)
         # rospy.Subscriber("/mavros/battery", BatteryState, voltage_uav_callback)
         # rospy.Subscriber("/mavros/altitude", Altitude, altitude_uav_callback)
-        rospy.Subscriber("/uav" + self.uav_id + "/mavros/local_position/pose", PoseStamped,
-                         self.local_position_uav_callback)
-        rospy.Subscriber("/uav" + self.uav_id + "/mavros/global_position/global", NavSatFix,
-                         self.global_position_uav_callback)
-        rospy.Subscriber("/uav" + self.uav_id + "/mavros/battery", BatteryState, self.voltage_uav_callback)
-        rospy.Subscriber("/uav" + self.uav_id + "/mavros/altitude", Altitude, self.altitude_uav_callback)
+        rospy.Subscriber("/sim_" + self.name + self.co_id + "/waypoint", PoseStamped,
+                         self.pose_co_callback)
+        rospy.Subscriber("/sim_" + self.name + self.co_id + "/global_position", PoseStamped,
+                         self.goal_co_callback)
+        rospy.Subscriber("/sim_" + self.name + self.co_id + "/waypoints_array", WaypointArray, self.trajectory_co_callback)
+        rospy.Subscriber("/sim_" + self.name + self.co_id + "/cmd_vel", Twist, self.cmd_vel_co_callback)
