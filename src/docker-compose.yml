@@ -1,19 +1,21 @@
 version: "3.7"
 
+volumes:
+  pg_project:
+
 services:
 
     rabbitmq:
-        build: ./rabbitmq
+        image: rabbitmq:management-alpine
         hostname: localhost
-        container_name: rabbitmq
         restart: always
         ports:
-            - "15672:15672"
-            - "5672:5672"
-            - "1883:1883"
+          - "15672:15672"
+          - "5672:5672"
+          - "1883:1883"
         volumes:
-            - ./rabbitmq-isolated.conf:/etc/rabbitmq/rabbitmq.config
-
+          - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+          - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
 
     uav_simulation:
         image: levakuz/uav_interface:0.15
