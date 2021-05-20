@@ -6,16 +6,15 @@ volumes:
 services:
 
     rabbitmq:
-        image: rabbitmq:management-alpine
-        hostname: localhost
-        restart: always
-        ports:
-          - "15672:15672"
-          - "5672:5672"
-          - "1883:1883"
-        volumes:
-          - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
-          - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+      image: rabbitmq:3-management-alpine
+      container_name: 'rabbitmq'
+      ports:
+        - 5672:5672
+        - 15672:15672
+      volumes:
+        - ~/.docker-conf/rabbitmq/data/:~/rabbitmq_uav/lib/rabbitmq/
+        - ~/.docker-conf/rabbitmq/log/:~/rabbitmq_uav/log/rabbitmq
+
 
     uav_simulation:
         image: levakuz/uav_interface:0.15
@@ -97,6 +96,13 @@ services:
           depends_on:
             - rabbitmq
 
+    mission_input_rpc:
+          image: levakuz/uav_interface:0.15
+          hostname: localhost
+          restart: always
+          command: python3 src/mission_rpc.py
+          depends_on:
+            - rabbitmq
 
     web-api:
         image: levakuz/uav_interface:0.15

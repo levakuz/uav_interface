@@ -21,7 +21,7 @@ connection_db = psycopg2.connect(user="postgres",
                                  database="postgres")
 
 
-def input_mission_rpc(ch, method, properties, body):
+def add_mission_rpc(ch, method, properties, body):
     recived_message = json.loads(body)
     status_message ={}
     final_json = {}
@@ -30,23 +30,30 @@ def input_mission_rpc(ch, method, properties, body):
         insert_query = """ INSERT INTO mission_input (directive_time_secs, time_out_of_launches, 
         simultaneous_launch_number, reset_point, landing_point, uavs, payload, target_type, dest_poligon,
         targets_number, targets_coords, time_intervals) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
-        """.format(recived_message["directive_time_secs"], recived_message["time_out_of_launches"],
-                   recived_message["simultaneous_launch_number"], recived_message["reset_point"],
-                   recived_message["landing_point"], recived_message["uavs"], recived_message["payload"],
-                   recived_message["target_type"], recived_message["dest_poligon"], recived_message["targets_number"],
-                   recived_message["targets_coords"], recived_message["time_intervals"])
-        cursor.execute(insert_query)
+        """
+        val = recived_message["directive_time_secs"], recived_message["time_out_of_launches"], \
+              recived_message["simultaneous_launch_number"], recived_message["reset_point"],\
+              recived_message["landing_point"], recived_message["uavs"], recived_message["payload"],\
+              recived_message["target_type"], recived_message["dest_poligon"], recived_message["targets_number"],\
+              recived_message["targets_coords"], recived_message["time_intervals"]
+        cursor.execute(insert_query, val)
         connection_db.commit()
         count = cursor.rowcount
         cursor.close()
-        channel.basic_publish(
-            exchange='',
-            routing_key="get_mission_params",
-            body=body,
-            properties=pika.BasicProperties(
-                delivery_mode=2,
-            ))
-
+        # channel.basic_publish(
+        #     exchange='',
+        #     routing_key="get_mission_params",
+        #     body=body,
+        #     properties=pika.BasicProperties(
+        #         delivery_mode=2,
+        #     ))
+        final_json = {}
+        final_json["status"] = "success"
+        ch.basic_publish(exchange='',
+                         routing_key=properties.reply_to,
+                         properties=pika.BasicProperties(correlation_id= \
+                                                             properties.correlation_id),
+                         body=json.dumps(final_json))
 
     except Error as e:
         print("error", e)
@@ -255,8 +262,8 @@ def get_mission_rpc(ch, method, properties, body):
                              body=json.dumps(status_message))
 
 
-channel.queue_declare(queue='input_mission_rpc', durable=False)
-channel.basic_consume(queue='input_mission_rpc', on_message_callback=input_mission_rpc, auto_ack=True)
+channel.queue_declare(queue='add_mission_rpc', durable=False)
+channel.basic_consume(queue='add_mission_rpc', on_message_callback=add_mission_rpc, auto_ack=True)
 channel.queue_declare(queue='delete_mission_rpc', durable=False)
 channel.basic_consume(queue='delete_mission_rpc', on_message_callback=delete_mission_rpc, auto_ack=True)
 channel.queue_declare(queue='get_mission_rpc', durable=False)

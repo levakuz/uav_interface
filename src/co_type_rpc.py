@@ -34,7 +34,7 @@ def add_co_type_rpc(ch, method, properties, body):
         if records:
                 cursor = connection_db.cursor()
                 insert_query = """ INSERT INTO co_type 
-                (name, max_vel, max_acc, min_acc, lenght, width, height, radius_of_turn, weapon)
+                (name, max_vel, max_acc, min_acc, length, width, height, radius_of_turn, weapon)
                  VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                 item_tuple = (recived_message["name"], recived_message["max_vel"], recived_message["max_acc"],
                               recived_message["min_acc"],
