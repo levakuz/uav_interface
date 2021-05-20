@@ -71,7 +71,7 @@ def get_co_weapon_rpc(ch, method, properties, body):
             try:
                 cursor = connection_db.cursor()
                 insert_query = """ SELECT * FROM co_weapon WHERE id = '{}';
-                            """.format(1)
+                            """.format(recived_message["id"])
                 cursor.execute(insert_query)
                 record = cursor.fetchone()
                 cursor.close()

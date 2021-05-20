@@ -27,7 +27,7 @@ def add_uav_role_rpc(ch, method, properties, body):
     status_message = {}
     try:
         cursor = connection_db.cursor()
-        insert_query = """ SELECT id FROM uav_type WHERE name = '{}';
+        insert_query = """ SELECT id FROM uav_type WHERE id = '{}';
                                 """.format(recived_message["uav_type"])
         cursor.execute(insert_query)
         record = cursor.fetchone()
