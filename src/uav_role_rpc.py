@@ -25,20 +25,33 @@ def add_uav_role_rpc(ch, method, properties, body):
     print(body)
     print(type(recived_message))
     status_message = {}
-    cursor = connection_db.cursor()
-    insert_query = """ SELECT id FROM uav_type WHERE name = '{}';
-                            """.format(recived_message["uav_type"])
-    cursor.execute(insert_query)
-    record = cursor.fetchone()
+    try:
+        cursor = connection_db.cursor()
+        insert_query = """ SELECT id FROM uav_type WHERE name = '{}';
+                                """.format(recived_message["uav_type"])
+        cursor.execute(insert_query)
+        record = cursor.fetchone()
+        cursor.close()
+    except Error as e:
+        print("error", e)
+        status_message["status"] = "error"
+        status_message["error"] = e.pgcode
+        connection_db.rollback()
+        ch.basic_publish(exchange='',
+                         routing_key=properties.reply_to,
+                         properties=pika.BasicProperties(correlation_id= \
+                                                             properties.correlation_id),
+                         body=json.dumps(status_message))
     if record:
         uav_type_id = record[0]
         try:
             print("here1")
             cursor = connection_db.cursor()
             insert_query = """ INSERT INTO uav_role(name, uav_type) VALUES (%s, %s)"""
-            item_tuple = (recived_message["name"],uav_type_id)
+            item_tuple = (recived_message["name"], uav_type_id)
             cursor.execute(insert_query, item_tuple)
             connection_db.commit()
+            cursor.close()
             status_message["status"] = "success"
             ch.basic_publish(exchange='',
                              routing_key=properties.reply_to,
@@ -58,8 +71,7 @@ def add_uav_role_rpc(ch, method, properties, body):
                              body=json.dumps(status_message))
     else:
         status_message["status"] = "error"
-        status_message["error"] = ""
-        status_message["details"] = "Not found name of uav type"
+        status_message["details"] = "Not found id of uav type"
         connection_db.rollback()
         ch.basic_publish(exchange='',
                          routing_key=properties.reply_to,
@@ -70,7 +82,7 @@ def add_uav_role_rpc(ch, method, properties, body):
 
 def get_uav_role_rpc(ch, method, properties, body):
     recived_message = json.loads(body)
-    status_message ={}
+    status_message = {}
     final_json = {}
     try:
         if recived_message["id"]:
@@ -81,6 +93,7 @@ def get_uav_role_rpc(ch, method, properties, body):
 
                 cursor.execute(insert_query)
                 records = cursor.fetchall()
+                cursor.close()
                 print(records)
                 if records:
                     for record in records:
@@ -90,6 +103,7 @@ def get_uav_role_rpc(ch, method, properties, body):
                     print(final_json)
                 else:
                     final_json["status"] = "not found"
+                    final_json["details"] = "No uav role with such id was found"
                 ch.basic_publish(exchange='',
                                  routing_key=properties.reply_to,
                                  properties=pika.BasicProperties(correlation_id= \
@@ -107,24 +121,39 @@ def get_uav_role_rpc(ch, method, properties, body):
                                  body=json.dumps(status_message))
 
     except KeyError:
-        cursor = connection_db.cursor()
-        insert_query = """ SELECT * FROM uav_role;
-                                           """
-        cursor.execute(insert_query)
-        records = cursor.fetchall()
-        print(records)
-        for record in records:
-            final_json[record[0]] = {}
-            final_json[record[0]]["name"] = record[1]
-            final_json[record[0]]["uav_type"] = record[2]
-        print(final_json)
-
-        print(json.dumps(final_json))
-        ch.basic_publish(exchange='',
-                         routing_key=properties.reply_to,
-                         properties=pika.BasicProperties(correlation_id= \
-                                                             properties.correlation_id),
-                         body=json.dumps(final_json))
+        try:
+            cursor = connection_db.cursor()
+            insert_query = """ SELECT * FROM uav_role;
+                                               """
+            cursor.execute(insert_query)
+            records = cursor.fetchall()
+            cursor.close()
+            print(records)
+            if records:
+                for record in records:
+                    final_json[record[0]] = {}
+                    final_json[record[0]]["name"] = record[1]
+                    final_json[record[0]]["uav_type"] = record[2]
+                print(final_json)
+            else:
+                final_json["status"] = "Not found"
+                final_json["details"] = "No roles in system"
+            print(json.dumps(final_json))
+            ch.basic_publish(exchange='',
+                             routing_key=properties.reply_to,
+                             properties=pika.BasicProperties(correlation_id= \
+                                                                 properties.correlation_id),
+                             body=json.dumps(final_json))
+        except Error as e:
+            print("error", e)
+            status_message["status"] = "error"
+            status_message["error"] = e.pgcode
+            connection_db.rollback()
+            ch.basic_publish(exchange='',
+                             routing_key=properties.reply_to,
+                             properties=pika.BasicProperties(correlation_id= \
+                                                                 properties.correlation_id),
+                             body=json.dumps(status_message))
 
 
 def delete_uav_role_rpc(ch, method, properties, body):
@@ -140,6 +169,7 @@ def delete_uav_role_rpc(ch, method, properties, body):
                 cursor.execute(insert_query)
                 connection_db.commit()
                 rows_deleted = cursor.rowcount
+                cursor.close()
                 if rows_deleted != 0:
                     final_json["status"] = "success"
                     ch.basic_publish(exchange='',
@@ -166,17 +196,29 @@ def delete_uav_role_rpc(ch, method, properties, body):
                                                                      properties.correlation_id),
                                  body=json.dumps(status_message))
         elif recived_message["key"] == "table":
-            cursor = connection_db.cursor()
-            insert_query = """ DELETE FROM uav_role;
-                                                    """
-            cursor.execute(insert_query)
-            connection_db.commit()
-            final_json["status"] = "success"
-            ch.basic_publish(exchange='',
-                             routing_key=properties.reply_to,
-                             properties=pika.BasicProperties(correlation_id= \
-                                                                 properties.correlation_id),
-                             body=json.dumps(final_json))
+            try:
+                cursor = connection_db.cursor()
+                insert_query = """ DELETE FROM uav_role;
+                                                        """
+                cursor.execute(insert_query)
+                connection_db.commit()
+                cursor.close()
+                final_json["status"] = "success"
+                ch.basic_publish(exchange='',
+                                 routing_key=properties.reply_to,
+                                 properties=pika.BasicProperties(correlation_id= \
+                                                                     properties.correlation_id),
+                                 body=json.dumps(final_json))
+            except Error as e:
+                print("error", e)
+                status_message["status"] = "error"
+                status_message["error"] = e.pgcode
+                connection_db.rollback()
+                ch.basic_publish(exchange='',
+                                 routing_key=properties.reply_to,
+                                 properties=pika.BasicProperties(correlation_id= \
+                                                                     properties.correlation_id),
+                                 body=json.dumps(status_message))
         else:
             final_json["status"] = "failed"
             final_json["details"] = "wrong parameter in key"
@@ -204,6 +246,7 @@ def delete_uav_role_rpc(ch, method, properties, body):
                          properties=pika.BasicProperties(correlation_id= \
                                                              properties.correlation_id),
                          body=json.dumps(status_message))
+
 
 channel.queue_declare(queue='add_uav_role_rpc', durable=False)
 channel.basic_consume(queue='add_uav_role_rpc', on_message_callback=add_uav_role_rpc, auto_ack=True)

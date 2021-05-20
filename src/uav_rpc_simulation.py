@@ -30,24 +30,20 @@ def find_timestamp(id, time):
     cursor.execute(insert_query)
     record = cursor.fetchone()
     print(record)
-    final_json = {}
-    # for record in records:
-    # print(record)
     json_list = False
     print(record)
     if record:
-        json_list = {'coords': record[2], 'altitude': record[3], 'battery': record[4], 'global_coords': record[5]}
-        json_list["time"] = record[0].strftime("%H:%M:%S")
+        json_list = {'coords': record[2], 'altitude': record[3], 'battery': record[4], 'global_coords': record[5],
+                     "time": record[0].strftime("%H:%M:%S")}
         if json_list["coords"] is None:
             cursor = connection_db.cursor()
             insert_query = """ SELECT coords FROM uav_dynamic_params WHERE time <= '{}' AND id = '{}' AND coords is not null ORDER BY time DESC;
                                                    """.format(time, id)
             cursor.execute(insert_query)
             record = cursor.fetchone()
-            json_list["coords"] = record[0]
             cursor.close()
-        # else:
-            # json_list["coords"] = json_list["coords"][0]
+            json_list["coords"] = record[0]
+
 
         if json_list["altitude"] is None:
             cursor = connection_db.cursor()
@@ -57,8 +53,6 @@ def find_timestamp(id, time):
             record = cursor.fetchone()
             json_list["altitude"] = record[0]
             cursor.close()
-        # else:
-        #     json_list["altitude"] = json_list["altitude"][0]
 
         if json_list["global_coords"] is None:
             cursor = connection_db.cursor()
@@ -69,7 +63,6 @@ def find_timestamp(id, time):
             cursor.close()
             json_list["global_coords"] = record
 
-
         if json_list["battery"] is None:
             cursor = connection_db.cursor()
             insert_query = """ SELECT battery FROM uav_dynamic_params WHERE time <= '{}' AND id = '{}' AND battery is not null ORDER BY time DESC;
@@ -78,10 +71,10 @@ def find_timestamp(id, time):
             record = cursor.fetchone()
             cursor.close()
             json_list["battery"] = record[0]
-        # else:
-        #     json_list["battery"] = json_list["battery"][0]
 
         print(json_list)
+    else:
+        json_list
     return json_list
 
 
@@ -130,7 +123,6 @@ def find_timestamp_last(id):
             cursor.close()
             json_list["global_coords"] = record
 
-
         if json_list["battery"] is None:
             cursor = connection_db.cursor()
             insert_query = """ SELECT battery FROM uav_dynamic_params WHERE time >= '{}' AND id = '{}' AND battery is not null ORDER BY time DESC;
@@ -157,12 +149,16 @@ def show_uav_ids_rpc(ch, method, properties, body):
     cursor.execute(insert_query)
     record = cursor.fetchall()
     cursor.close()
-    print(record[0][0])
-    for i in range(len(record)):
-        id_list.append(record[i][0])
+    if record:
+        print(record[0][0])
+        for i in range(len(record)):
+            id_list.append(record[i][0])
 
-    final_json["id"] = id_list
-    print(json.dumps(record))
+        final_json["id"] = id_list
+        print(json.dumps(record))
+    else:
+        final_json["status"] = "Not found"
+        final_json["details"] = "No information was found"
     ch.basic_publish(exchange='',
                      routing_key=properties.reply_to,
                      properties=pika.BasicProperties(correlation_id= \
@@ -170,7 +166,7 @@ def show_uav_ids_rpc(ch, method, properties, body):
                      body=json.dumps(final_json))
 
 
-def uav_all_parametrs_rpc(ch, method, properties, body):
+def uav_all_parameters_rpc(ch, method, properties, body):
     final_json = {}
     message = json.loads(body)
     print(message)
@@ -188,16 +184,23 @@ def uav_all_parametrs_rpc(ch, method, properties, body):
         cursor.execute(insert_query)
         record = cursor.fetchall()
         cursor.close()
-        if message["time"] == "last":
-            for i in record:
-                jsonlist = find_timestamp_last(i[0])
-                final_json[i[0]] = jsonlist
-            print(final_json)
+        if record:
+            if message["time"] == "last":
+                for i in record:
+                    jsonlist = find_timestamp_last(i[0])
+                    final_json[i[0]] = jsonlist
+                print(final_json)
+            else:
+                for i in record:
+                    jsonlist = find_timestamp(i[0], message["time"])
+                    final_json[i[0]] = jsonlist
+                print(final_json)
         else:
-            for i in record:
-                jsonlist = find_timestamp(i[0], message["time"])
-                final_json[i[0]] = jsonlist
-            print(final_json)
+            final_json["status"] = "Not found"
+            final_json["details"] = "No uavs in system"
+    if not final_json:
+        final_json["status"] = "Not found"
+        final_json["details"] = "No information was found"
     ch.basic_publish(exchange='',
                      routing_key=properties.reply_to,
                      properties=pika.BasicProperties(correlation_id= \
@@ -215,25 +218,33 @@ def uav_local_pose_rpc(ch, method, properties, body):
             cursor.execute(insert_query)
             record = cursor.fetchall()
             cursor.close()
-            final_json = {}
-            for i in record:
-                print(i[0])
-                cursor = connection_db.cursor()
-                insert_query = """ SELECT coords, time FROM uav_dynamic_params WHERE time >= '{}' AND id = '{}' AND coords is not null  ORDER BY time DESC;
-                                        """.format("17:30", i[0])
-                cursor.execute(insert_query)
-                records = cursor.fetchall()
-                cursor.close()
-                print(records[0])
-                record = json.loads(records[0][0])
-                record["time"] = records[0][1].strftime("%H:%M:%S")
-                final_json[i[0]] = record
-            print(final_json)
+            if record:
+                final_json = {}
+                for i in record:
+                    print(i[0])
+                    cursor = connection_db.cursor()
+                    insert_query = """ SELECT coords, time FROM uav_dynamic_params WHERE time >= '{}' AND id = '{}' AND coords is not null  ORDER BY time DESC;
+                                            """.format("17:30", i[0])
+                    cursor.execute(insert_query)
+                    records = cursor.fetchall()
+                    cursor.close()
+                    print(records[0])
+                    record = json.loads(records[0][0])
+                    record["time"] = records[0][1].strftime("%H:%M:%S")
+                    final_json[i[0]] = record
+                print(final_json)
+                ch.basic_publish(exchange='',
+                                 routing_key=properties.reply_to,
+                                 properties=pika.BasicProperties(correlation_id= \
+                                                                     properties.correlation_id),
+                                 body=json.dumps(final_json))
+        else:
+            status_message = {"status": "Not found", "details": "No information was found"}
             ch.basic_publish(exchange='',
                              routing_key=properties.reply_to,
                              properties=pika.BasicProperties(correlation_id= \
                                                                  properties.correlation_id),
-                             body=json.dumps(final_json))
+                             body=json.dumps(status_message))
     except KeyError:
         if message["id"]:
             cursor = connection_db.cursor()
@@ -242,14 +253,22 @@ def uav_local_pose_rpc(ch, method, properties, body):
             cursor.execute(insert_query)
             records = cursor.fetchall()
             cursor.close()
-            print(records[0][0])
-            record = json.loads(records[0][0])
-            record ["time"] = records[0][1].strftime("%H:%M:%S")
-            ch.basic_publish(exchange='',
-                             routing_key=properties.reply_to,
-                             properties=pika.BasicProperties(correlation_id= \
-                                                                 properties.correlation_id),
-                             body=json.dumps(record))
+            if records:
+                print(records[0][0])
+                record = json.loads(records[0][0])
+                record ["time"] = records[0][1].strftime("%H:%M:%S")
+                ch.basic_publish(exchange='',
+                                 routing_key=properties.reply_to,
+                                 properties=pika.BasicProperties(correlation_id= \
+                                                                     properties.correlation_id),
+                                 body=json.dumps(record))
+            else:
+                status_message = {"status": "Not found", "details": "No information was found"}
+                ch.basic_publish(exchange='',
+                                 routing_key=properties.reply_to,
+                                 properties=pika.BasicProperties(correlation_id= \
+                                                                     properties.correlation_id),
+                                 body=json.dumps(status_message))
 
 
 def uav_global_pose_rpc(ch, method, properties, body):
@@ -262,26 +281,40 @@ def uav_global_pose_rpc(ch, method, properties, body):
             cursor.execute(insert_query)
             record = cursor.fetchall()
             cursor.close()
-            final_json = {}
-            for i in record:
-                print(i[0])
-                cursor = connection_db.cursor()
-                insert_query = """ SELECT global_coords, time FROM uav_dynamic_params WHERE time >= '{}' AND id = '{}' AND global_coords is not null  ORDER BY time DESC;
-                                        """.format(message["time"], i[0])
-                cursor.execute(insert_query)
-                records = cursor.fetchall()
-                cursor.close()
-                if records:
-                    print(records)
-                    record = json.loads(records[0][0])
-                    record["time"] = records[0][1].strftime("%H:%M:%S")
-                    final_json[i[0]] = record
-            print(final_json)
-            ch.basic_publish(exchange='',
-                             routing_key=properties.reply_to,
-                             properties=pika.BasicProperties(correlation_id= \
-                                                                 properties.correlation_id),
-                             body=json.dumps(final_json))
+            if record:
+                for i in record:
+                    print(i[0])
+                    cursor = connection_db.cursor()
+                    insert_query = """ SELECT global_coords, time FROM uav_dynamic_params WHERE time >= '{}' AND id = '{}' AND global_coords is not null  ORDER BY time DESC;
+                                            """.format(message["time"], i[0])
+                    cursor.execute(insert_query)
+                    records = cursor.fetchall()
+                    cursor.close()
+                    if records:
+                        print(records)
+                        record = json.loads(records[0][0])
+                        record["time"] = records[0][1].strftime("%H:%M:%S")
+                        final_json = {i[0]: record}
+                        print(final_json)
+                        ch.basic_publish(exchange='',
+                                         routing_key=properties.reply_to,
+                                         properties=pika.BasicProperties(correlation_id= \
+                                                                             properties.correlation_id),
+                                         body=json.dumps(final_json))
+                    else:
+                        status_message = {"status": "Not found", "details": "No information was found"}
+                        ch.basic_publish(exchange='',
+                                         routing_key=properties.reply_to,
+                                         properties=pika.BasicProperties(correlation_id= \
+                                                                             properties.correlation_id),
+                                         body=json.dumps(status_message))
+            else:
+                status_message = {"status": "Not found", "details": "No uavs in system"}
+                ch.basic_publish(exchange='',
+                                 routing_key=properties.reply_to,
+                                 properties=pika.BasicProperties(correlation_id= \
+                                                                     properties.correlation_id),
+                                 body=json.dumps(status_message))
     except KeyError:
         if message["id"]:
             cursor = connection_db.cursor()
@@ -290,14 +323,22 @@ def uav_global_pose_rpc(ch, method, properties, body):
             cursor.execute(insert_query)
             records = cursor.fetchall()
             cursor.close()
-            print(records[0][0])
-            record = json.loads(records[0][0])
-            record["time"] = records[0][1].strftime("%H:%M:%S")
-            ch.basic_publish(exchange='',
-                             routing_key=properties.reply_to,
-                             properties=pika.BasicProperties(correlation_id= \
-                                                                 properties.correlation_id),
-                             body=json.dumps(record))
+            if records:
+                print(records[0][0])
+                record = json.loads(records[0][0])
+                record["time"] = records[0][1].strftime("%H:%M:%S")
+                ch.basic_publish(exchange='',
+                                 routing_key=properties.reply_to,
+                                 properties=pika.BasicProperties(correlation_id= \
+                                                                     properties.correlation_id),
+                                 body=json.dumps(record))
+            else:
+                status_message = {"status": "Not found", "details": "No information was found"}
+                ch.basic_publish(exchange='',
+                                 routing_key=properties.reply_to,
+                                 properties=pika.BasicProperties(correlation_id= \
+                                                                     properties.correlation_id),
+                                 body=json.dumps(status_message))
 
 
 def uav_altitude_rpc(ch, method, properties, body):
@@ -310,27 +351,33 @@ def uav_altitude_rpc(ch, method, properties, body):
             cursor.execute(insert_query)
             record = cursor.fetchall()
             cursor.close()
-            final_json = {}
-            newrecord = {}
-            for i in record:
-                print(i[0])
-                cursor = connection_db.cursor()
-                insert_query = """ SELECT altitude, time FROM uav_dynamic_params WHERE time >= '{}' AND id = '{}' AND altitude is not null  ORDER BY time DESC;
-                                        """.format(message["time"], i[0])
-                cursor.execute(insert_query)
-                records = cursor.fetchall()
-                cursor.close()
-                if records:
-                    print(records)
-                    newrecord["altitude"] = records[0][0]
-                    newrecord["time"] = records[0][1].strftime("%H:%M:%S")
-                    final_json[i[0]] = newrecord
-            print(final_json)
-            ch.basic_publish(exchange='',
-                             routing_key=properties.reply_to,
-                             properties=pika.BasicProperties(correlation_id= \
-                                                                 properties.correlation_id),
-                             body=json.dumps(final_json))
+            if record:
+
+                for i in record:
+                    print(i[0])
+                    cursor = connection_db.cursor()
+                    insert_query = """ SELECT altitude, time FROM uav_dynamic_params WHERE time >= '{}' AND id = '{}' AND altitude is not null  ORDER BY time DESC;
+                                            """.format(message["time"], i[0])
+                    cursor.execute(insert_query)
+                    records = cursor.fetchall()
+                    cursor.close()
+                    if records:
+                        print(records)
+                        newrecord = {"altitude": records[0][0], "time": records[0][1].strftime("%H:%M:%S")}
+                        final_json = {i[0]: newrecord}
+                print(final_json)
+                ch.basic_publish(exchange='',
+                                 routing_key=properties.reply_to,
+                                 properties=pika.BasicProperties(correlation_id= \
+                                                                     properties.correlation_id),
+                                 body=json.dumps(final_json))
+            else:
+                status_message = {"status": "Not found", "details": "No information was found"}
+                ch.basic_publish(exchange='',
+                                 routing_key=properties.reply_to,
+                                 properties=pika.BasicProperties(correlation_id= \
+                                                                     properties.correlation_id),
+                                 body=json.dumps(status_message))
     except KeyError:
         if message["id"]:
             cursor = connection_db.cursor()
@@ -339,15 +386,21 @@ def uav_altitude_rpc(ch, method, properties, body):
             cursor.execute(insert_query)
             records = cursor.fetchall()
             cursor.close()
-            print(records[0])
-            record = {}
-            record["altitude"] = records[0][0]
-            record["time"] = records[0][1].strftime("%H:%M:%S")
-            ch.basic_publish(exchange='',
-                             routing_key=properties.reply_to,
-                             properties=pika.BasicProperties(correlation_id= \
-                                                                 properties.correlation_id),
-                             body=json.dumps(record))
+            if records:
+                print(records[0])
+                record = {"altitude": records[0][0], "time": records[0][1].strftime("%H:%M:%S")}
+                ch.basic_publish(exchange='',
+                                 routing_key=properties.reply_to,
+                                 properties=pika.BasicProperties(correlation_id= \
+                                                                     properties.correlation_id),
+                                 body=json.dumps(record))
+            else:
+                status_message = {"status": "Not found", "details": "No information was found"}
+                ch.basic_publish(exchange='',
+                                 routing_key=properties.reply_to,
+                                 properties=pika.BasicProperties(correlation_id= \
+                                                                     properties.correlation_id),
+                                 body=json.dumps(status_message))
 
 
 def uav_battery_rpc(ch, method, properties, body):
@@ -360,27 +413,35 @@ def uav_battery_rpc(ch, method, properties, body):
             cursor.execute(insert_query)
             record = cursor.fetchall()
             cursor.close()
-            final_json = {}
-            newrecord = {}
-            for i in record:
-                print(i[0])
-                cursor = connection_db.cursor()
-                insert_query = """ SELECT battery, time FROM uav_dynamic_params WHERE time >= '{}' AND id = '{}' AND battery is not null  ORDER BY time DESC;
-                                        """.format(message["time"], i[0])
-                cursor.execute(insert_query)
-                records = cursor.fetchall()
-                cursor.close()
-                if records:
-                    print(records)
-                    newrecord["battery"] = records[0][0]
-                    newrecord["time"] = records[0][1].strftime("%H:%M:%S")
-                    final_json[i[0]] = newrecord
-            print(final_json)
-            ch.basic_publish(exchange='',
-                             routing_key=properties.reply_to,
-                             properties=pika.BasicProperties(correlation_id= \
-                                                                 properties.correlation_id),
-                             body=json.dumps(final_json))
+            if record:
+                final_json = {}
+                newrecord = {}
+                for i in record:
+                    print(i[0])
+                    cursor = connection_db.cursor()
+                    insert_query = """ SELECT battery, time FROM uav_dynamic_params WHERE time >= '{}' AND id = '{}' AND battery is not null  ORDER BY time DESC;
+                                            """.format(message["time"], i[0])
+                    cursor.execute(insert_query)
+                    records = cursor.fetchall()
+                    cursor.close()
+                    if records:
+                        print(records)
+                        newrecord["battery"] = records[0][0]
+                        newrecord["time"] = records[0][1].strftime("%H:%M:%S")
+                        final_json[i[0]] = newrecord
+                print(final_json)
+                ch.basic_publish(exchange='',
+                                 routing_key=properties.reply_to,
+                                 properties=pika.BasicProperties(correlation_id= \
+                                                                     properties.correlation_id),
+                                 body=json.dumps(final_json))
+            else:
+                status_message = {"status": "Not found", "details": "No information was found"}
+                ch.basic_publish(exchange='',
+                                 routing_key=properties.reply_to,
+                                 properties=pika.BasicProperties(correlation_id= \
+                                                                     properties.correlation_id),
+                                 body=json.dumps(status_message))
     except KeyError:
         if message["id"]:
             cursor = connection_db.cursor()
@@ -389,15 +450,23 @@ def uav_battery_rpc(ch, method, properties, body):
             cursor.execute(insert_query)
             records = cursor.fetchall()
             cursor.close()
-            print(records[0][0])
-            record = {}
-            record["battery"] = records[0][0]
-            record ["time"] = records[0][1].strftime("%H:%M:%S")
-            ch.basic_publish(exchange='',
-                             routing_key=properties.reply_to,
-                             properties=pika.BasicProperties(correlation_id= \
-                                                                 properties.correlation_id),
-                             body=json.dumps(record))
+            if records:
+                print(records[0][0])
+                record = {}
+                record["battery"] = records[0][0]
+                record ["time"] = records[0][1].strftime("%H:%M:%S")
+                ch.basic_publish(exchange='',
+                                 routing_key=properties.reply_to,
+                                 properties=pika.BasicProperties(correlation_id= \
+                                                                     properties.correlation_id),
+                                 body=json.dumps(record))
+            else:
+                status_message = {"status": "Not found", "details": "No information was found"}
+                ch.basic_publish(exchange='',
+                                 routing_key=properties.reply_to,
+                                 properties=pika.BasicProperties(correlation_id= \
+                                                                     properties.correlation_id),
+                                 body=json.dumps(status_message))
 
 
 channel.queue_declare(queue='uav_local_pose_rpc', durable=False)
@@ -411,7 +480,7 @@ channel.basic_consume(queue='uav_local_pose_rpc', on_message_callback=uav_local_
 channel.basic_consume(queue='uav_global_pose_rpc', on_message_callback=uav_global_pose_rpc, auto_ack=True)
 channel.basic_consume(queue='uav_altitude_rpc', on_message_callback=uav_altitude_rpc, auto_ack=True)
 channel.basic_consume(queue='uav_battery_rpc', on_message_callback=uav_battery_rpc, auto_ack=True)
-channel.basic_consume(queue='uav_all_parametrs_rpc', on_message_callback=uav_all_parametrs_rpc, auto_ack=True)
+channel.basic_consume(queue='uav_all_parametrs_rpc', on_message_callback=uav_all_parameters_rpc, auto_ack=True)
 channel.basic_consume(queue='show_uav_ids_rpc', on_message_callback=show_uav_ids_rpc, auto_ack=True)
 
 channel.start_consuming()

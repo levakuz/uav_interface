@@ -37,6 +37,7 @@ def add_uav_type_rpc(ch, method, properties, body):
                       recived_message["fuel_consume"], recived_message["radius_of_turn"])
         cursor.execute(insert_query, item_tuple)
         connection_db.commit()
+        cursor.close()
         status_message["status"] = "success"
         ch.basic_publish(exchange='',
                          routing_key=properties.reply_to,
@@ -67,26 +68,34 @@ def get_uav_type_rpc(ch, method, properties, body):
                                         """.format(recived_message["id"])
                 cursor.execute(insert_query)
                 record = cursor.fetchall()
-                print(record)
-                recived_message = {}
-                recived_message["name"] = record[0][-2]
-                recived_message["vel"] = []
-                recived_message["vel"].append(record[0][0])
-                recived_message["vel"].append(record[0][1])
-                recived_message["vertical_vel_up"] = []
-                recived_message["vertical_vel_up"].append(record[0][3])
-                recived_message["vertical_vel_up"].append(record[0][2])
-                recived_message["vertical_vel_down"] = []
-                recived_message["vertical_vel_down"].append(record[0][5])
-                recived_message["vertical_vel_down"].append(record[0][4])
-                recived_message["cargo_type"] = record[0][6]
-                recived_message["fuel_consume"] = record[0][7]
-                recived_message["radius_of_turn"] = record[0][8]
-                ch.basic_publish(exchange='',
-                                 routing_key=properties.reply_to,
-                                 properties=pika.BasicProperties(correlation_id= \
-                                                                     properties.correlation_id),
-                                 body=json.dumps(recived_message))
+                cursor.close()
+                if record:
+                    print(record)
+                    final_json = {"name": record[0][-2], "vel": []}
+                    final_json["vel"].append(record[0][0])
+                    final_json["vel"].append(record[0][1])
+                    final_json["vertical_vel_up"] = []
+                    final_json["vertical_vel_up"].append(record[0][3])
+                    final_json["vertical_vel_up"].append(record[0][2])
+                    final_json["vertical_vel_down"] = []
+                    final_json["vertical_vel_down"].append(record[0][5])
+                    final_json["vertical_vel_down"].append(record[0][4])
+                    final_json["cargo_type"] = record[0][6]
+                    final_json["fuel_consume"] = record[0][7]
+                    final_json["radius_of_turn"] = record[0][8]
+                    ch.basic_publish(exchange='',
+                                     routing_key=properties.reply_to,
+                                     properties=pika.BasicProperties(correlation_id= \
+                                                                         properties.correlation_id),
+                                     body=json.dumps(final_json))
+                else:
+                    status_message = {"status": "Not found", "details": "No information was found"}
+                    ch.basic_publish(exchange='',
+                                     routing_key=properties.reply_to,
+                                     properties=pika.BasicProperties(correlation_id= \
+                                                                         properties.correlation_id),
+                                     body=json.dumps(status_message))
+
             except Error as e:
                 print("error", e)
                 status_message["status"] = "error"
@@ -104,31 +113,40 @@ def get_uav_type_rpc(ch, method, properties, body):
                                                """
         cursor.execute(insert_query)
         records = cursor.fetchall()
-        print(records)
-        final_json = {}
-        for record in records:
-            print(record)
-            final_json[record[-1]] = {}
-            final_json[record[-1]]["name"] = record[-2]
-            final_json[record[-1]]["vel"] = []
-            final_json[record[-1]]["vel"].append(record[0])
-            final_json[record[-1]]["vel"].append(record[1])
-            final_json[record[-1]]["vertical_vel_up"] = []
-            final_json[record[-1]]["vertical_vel_up"].append(record[3])
-            final_json[record[-1]]["vertical_vel_up"].append(record[2])
-            final_json[record[-1]]["vertical_vel_down"] = []
-            final_json[record[-1]]["vertical_vel_down"].append(record[5])
-            final_json[record[-1]]["vertical_vel_down"].append(record[4])
-            final_json[record[-1]]["cargo_type"] = record[6]
-            final_json[record[-1]]["fuel_consume"] = record[7]
-            final_json[record[-1]]["radius_of_turn"] = record[8]
+        cursor.close()
+        if records:
+            print(records)
+            final_json = {}
+            for record in records:
+                print(record)
+                final_json[record[-1]] = {}
+                final_json[record[-1]]["name"] = record[-2]
+                final_json[record[-1]]["vel"] = []
+                final_json[record[-1]]["vel"].append(record[0])
+                final_json[record[-1]]["vel"].append(record[1])
+                final_json[record[-1]]["vertical_vel_up"] = []
+                final_json[record[-1]]["vertical_vel_up"].append(record[3])
+                final_json[record[-1]]["vertical_vel_up"].append(record[2])
+                final_json[record[-1]]["vertical_vel_down"] = []
+                final_json[record[-1]]["vertical_vel_down"].append(record[5])
+                final_json[record[-1]]["vertical_vel_down"].append(record[4])
+                final_json[record[-1]]["cargo_type"] = record[6]
+                final_json[record[-1]]["fuel_consume"] = record[7]
+                final_json[record[-1]]["radius_of_turn"] = record[8]
 
-        print(json.dumps(final_json))
-        ch.basic_publish(exchange='',
-                         routing_key=properties.reply_to,
-                         properties=pika.BasicProperties(correlation_id= \
-                                                             properties.correlation_id),
-                         body=json.dumps(final_json))
+            print(json.dumps(final_json))
+            ch.basic_publish(exchange='',
+                             routing_key=properties.reply_to,
+                             properties=pika.BasicProperties(correlation_id= \
+                                                                 properties.correlation_id),
+                             body=json.dumps(final_json))
+        else:
+            status_message = {"status": "Not found", "details": "No information was found"}
+            ch.basic_publish(exchange='',
+                             routing_key=properties.reply_to,
+                             properties=pika.BasicProperties(correlation_id= \
+                                                                 properties.correlation_id),
+                             body=json.dumps(status_message))
 
 
 def delete_uav_type_rpc (ch, method, properties, body):
@@ -144,6 +162,7 @@ def delete_uav_type_rpc (ch, method, properties, body):
                 cursor.execute(insert_query)
                 connection_db.commit()
                 rows_deleted = cursor.rowcount
+                cursor.close()
                 if rows_deleted != 0:
                     final_json["status"] = "success"
                     ch.basic_publish(exchange='',
@@ -175,6 +194,7 @@ def delete_uav_type_rpc (ch, method, properties, body):
                                                     """
             cursor.execute(insert_query)
             connection_db.commit()
+            cursor.close()
             final_json["status"] = "success"
             ch.basic_publish(exchange='',
                              routing_key=properties.reply_to,

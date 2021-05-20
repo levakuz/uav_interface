@@ -91,7 +91,7 @@ def get_co_rpc(ch, method, properties, body):
                     final_json["co_type"] = record[1]
                     print(final_json)
                 else:
-                    final_json["status"] = "not found"
+                    final_json = {"status": "Not found", "details": "No co with such id was found"}
                 ch.basic_publish(exchange='',
                                  routing_key=properties.reply_to,
                                  properties=pika.BasicProperties(correlation_id= \
@@ -114,13 +114,16 @@ def get_co_rpc(ch, method, properties, body):
                                                    """
         cursor.execute(insert_query)
         records = cursor.fetchall()
+        cursor.close()
         print(records)
         final_json = {}
-        for record in records:
-            final_json[record[0]] = {}
-            final_json[record[0]]["co_type"] = record[1]
-        print(final_json)
-
+        if records:
+            for record in records:
+                final_json[record[0]] = {}
+                final_json[record[0]]["co_type"] = record[1]
+            print(final_json)
+        else:
+            final_json = {"status": "Not found", "details": "CO is empty"}
         print(json.dumps(final_json))
         ch.basic_publish(exchange='',
                          routing_key=properties.reply_to,
@@ -182,6 +185,7 @@ def delete_co_rpc(ch, method, properties, body):
                                                     """
             cursor.execute(insert_query)
             connection_db.commit()
+            cursor.close()
             final_json["status"] = "success"
             ch.basic_publish(exchange='',
                              routing_key=properties.reply_to,
@@ -206,7 +210,6 @@ def delete_co_rpc(ch, method, properties, body):
                          properties=pika.BasicProperties(correlation_id= \
                                                              properties.correlation_id),
                          body=json.dumps(status_message))
-
     except TypeError:
         status_message["status"] = "error"
         status_message["details"] = "wrong format"

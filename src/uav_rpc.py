@@ -91,7 +91,8 @@ def get_uav_rpc(ch, method, properties, body):
                     final_json["time_for_prepare"] = record[3]
                     print(final_json)
                 else:
-                    final_json["status"] = "not found"
+                    final_json["status"] = "Not found"
+                    final_json["details"] = "No information was found"
                 ch.basic_publish(exchange='',
                                  routing_key=properties.reply_to,
                                  properties=pika.BasicProperties(correlation_id= \
@@ -114,18 +115,23 @@ def get_uav_rpc(ch, method, properties, body):
                                                    """
         cursor.execute(insert_query)
         records = cursor.fetchall()
+        cursor.close()
         print(records)
         final_json = {}
-        for record in records:
-            final_json[record[-2]] = {}
-            final_json[record[-2]]["tail_number"] = record[0]
-            final_json[record[-2]]["uav_type"] = record[1]
-            final_json[record[-2]]["uav_role"] = record[-1]
-            final_json[record[-2]]["fuel_resource"] = record[2]
-            final_json[record[-2]]["time_for_prepare"] = record[3]
-        print(final_json)
+        if records:
+            for record in records:
+                final_json[record[-2]] = {}
+                final_json[record[-2]]["tail_number"] = record[0]
+                final_json[record[-2]]["uav_type"] = record[1]
+                final_json[record[-2]]["uav_role"] = record[-1]
+                final_json[record[-2]]["fuel_resource"] = record[2]
+                final_json[record[-2]]["time_for_prepare"] = record[3]
+            print(final_json)
 
-        print(json.dumps(final_json))
+            print(json.dumps(final_json))
+        else:
+            final_json["status"] = "Not found"
+            final_json["details"] = "No information was found"
         ch.basic_publish(exchange='',
                          routing_key=properties.reply_to,
                          properties=pika.BasicProperties(correlation_id= \
@@ -187,6 +193,7 @@ def delete_uav_rpc(ch, method, properties, body):
                                                     """
             cursor.execute(insert_query)
             connection_db.commit()
+            cursor.close()
             final_json["status"] = "success"
             ch.basic_publish(exchange='',
                              routing_key=properties.reply_to,
@@ -220,6 +227,7 @@ def delete_uav_rpc(ch, method, properties, body):
                          properties=pika.BasicProperties(correlation_id= \
                                                              properties.correlation_id),
                          body=json.dumps(status_message))
+
 
 channel.queue_declare(queue='add_uav_rpc', durable=False)
 channel.basic_consume(queue='add_uav_rpc', on_message_callback=add_uav_rpc, auto_ack=True)
