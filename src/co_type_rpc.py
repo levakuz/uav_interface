@@ -23,7 +23,6 @@ connection_db = psycopg2.connect(user="postgres",
 def add_co_type_rpc(ch, method, properties, body):
     recived_message = json.loads(body)
     print(body)
-    status_message = {}
     try:
         cursor = connection_db.cursor()
         insert_query = """ SELECT * FROM co_weapon WHERE id = '{}';
@@ -42,7 +41,7 @@ def add_co_type_rpc(ch, method, properties, body):
                               recived_message["radius_of_turn"], recived_message["weapon"])
                 cursor.execute(insert_query, item_tuple)
                 connection_db.commit()
-                status_message["status"] = "success"
+                status_message= {"status": "success"}
                 ch.basic_publish(exchange='',
                                  routing_key=properties.reply_to,
                                  properties=pika.BasicProperties(correlation_id= \
@@ -50,18 +49,15 @@ def add_co_type_rpc(ch, method, properties, body):
                                  body=json.dumps(status_message))
 
         else:
-            status_message["status"] = "error"
-            status_message["details"] = "No such weapon"
+            status_message= {"status": "error", "details": "No such weapon"}
             ch.basic_publish(exchange='',
                              routing_key=properties.reply_to,
                              properties=pika.BasicProperties(correlation_id= \
                                                                  properties.correlation_id),
                              body=json.dumps(status_message))
-
     except Error as e:
         print("error", e)
-        status_message["status"] = "error"
-        status_message["error"] = e.pgcode
+        status_message= {"status": "error", "error": e.pgcode}
         connection_db.rollback()
         ch.basic_publish(exchange='',
                          routing_key=properties.reply_to,
@@ -70,10 +66,15 @@ def add_co_type_rpc(ch, method, properties, body):
                          body=json.dumps(status_message))
     except KeyError as e:
         print("error", e)
-        status_message["status"] = "error"
-        status_message["key"] = str(e)
-        status_message["details"] = "No existing key"
+        status_message= {"status": "error", "key": str(e), "details": "No existing key"}
         connection_db.rollback()
+        ch.basic_publish(exchange='',
+                         routing_key=properties.reply_to,
+                         properties=pika.BasicProperties(correlation_id= \
+                                                             properties.correlation_id),
+                         body=json.dumps(status_message))
+    except TypeError:
+        status_message = {"status": "error", "details": "wrong format"}
         ch.basic_publish(exchange='',
                          routing_key=properties.reply_to,
                          properties=pika.BasicProperties(correlation_id= \
@@ -83,78 +84,83 @@ def add_co_type_rpc(ch, method, properties, body):
 
 def get_co_type_rpc(ch, method, properties, body):
     recived_message = json.loads(body)
-    status_message ={}
     final_json = {}
     try:
         if recived_message["id"]:
-            try:
-                cursor = connection_db.cursor()
-                insert_query = """ SELECT * FROM co_type WHERE id = '{}';
-                                        """.format(recived_message["id"])
-                cursor.execute(insert_query)
-                record = cursor.fetchone()
-                final_json = {}
-                if record:
-                    print(record)
-                    final_json["id"] = record[0]
-                    final_json["name"] = record[1]
-                    final_json["max_acc"] = record[2]
-                    final_json["min_acc"] = record[3]
-                    final_json["length"] = record[4]
-                    final_json["width"] = record[5]
-                    final_json["height"] = record[6]
-                    final_json["radius_of_turn"] = record[7]
-                    final_json["weapon"] = record[8]
-                    print(final_json)
-                else:
-                    final_json["status"] = "not found"
-                ch.basic_publish(exchange='',
-                                 routing_key=properties.reply_to,
-                                 properties=pika.BasicProperties(correlation_id= \
-                                                                     properties.correlation_id),
-                                 body=json.dumps(final_json))
-            except Error as e:
-                print("error", e)
-                status_message["status"] = "error"
-                status_message["error"] = e.pgcode
-                connection_db.rollback()
-                ch.basic_publish(exchange='',
-                                 routing_key=properties.reply_to,
-                                 properties=pika.BasicProperties(correlation_id= \
-                                                                     properties.correlation_id),
-                                 body=json.dumps(status_message))
-
+            cursor = connection_db.cursor()
+            insert_query = """ SELECT * FROM co_type WHERE id = '{}';
+                                    """.format(recived_message["id"])
+            cursor.execute(insert_query)
+            record = cursor.fetchone()
+            final_json = {}
+            if record:
+                print(record)
+                final_json["id"] = record[0]
+                final_json["name"] = record[1]
+                final_json["max_acc"] = record[2]
+                final_json["min_acc"] = record[3]
+                final_json["length"] = record[4]
+                final_json["width"] = record[5]
+                final_json["height"] = record[6]
+                final_json["radius_of_turn"] = record[7]
+                final_json["weapon"] = record[8]
+                print(final_json)
+            else:
+                final_json["status"] = "not found"
+            ch.basic_publish(exchange='',
+                             routing_key=properties.reply_to,
+                             properties=pika.BasicProperties(correlation_id= \
+                                                                 properties.correlation_id),
+                             body=json.dumps(final_json))
     except KeyError:
-        cursor = connection_db.cursor()
-        insert_query = """ SELECT * FROM co_type;
-                                                   """
-        cursor.execute(insert_query)
-        records = cursor.fetchall()
-        print(records)
-        final_json = {}
-        for record in records:
-            final_json[record[0]] = {}
-            final_json[record[0]]["id"] = record[0]
-            final_json[record[0]]["name"] = record[1]
-            final_json[record[0]]["max_acc"] = record[2]
-            final_json[record[0]]["min_acc"] = record[3]
-            final_json[record[0]]["length"] = record[4]
-            final_json[record[0]]["width"] = record[5]
-            final_json[record[0]]["height"] = record[6]
-            final_json[record[0]]["radius_of_turn"] = record[7]
-            final_json[record[0]]["weapon"] = record[8]
-        print(final_json)
+        try:
+            cursor = connection_db.cursor()
+            insert_query = """ SELECT * FROM co_type;
+                                                       """
+            cursor.execute(insert_query)
+            records = cursor.fetchall()
+            print(records)
+            final_json = {}
+            for record in records:
+                final_json[record[0]] = {}
+                final_json[record[0]]["id"] = record[0]
+                final_json[record[0]]["name"] = record[1]
+                final_json[record[0]]["max_acc"] = record[2]
+                final_json[record[0]]["min_acc"] = record[3]
+                final_json[record[0]]["length"] = record[4]
+                final_json[record[0]]["width"] = record[5]
+                final_json[record[0]]["height"] = record[6]
+                final_json[record[0]]["radius_of_turn"] = record[7]
+                final_json[record[0]]["weapon"] = record[8]
+            print(final_json)
 
-        print(json.dumps(final_json))
+            print(json.dumps(final_json))
+            ch.basic_publish(exchange='',
+                             routing_key=properties.reply_to,
+                             properties=pika.BasicProperties(correlation_id= \
+                                                                 properties.correlation_id),
+                             body=json.dumps(final_json))
+        except Error as e:
+            print("error", e)
+            status_message= {"status": "error", "error": e.pgcode}
+            connection_db.rollback()
+            ch.basic_publish(exchange='',
+                             routing_key=properties.reply_to,
+                             properties=pika.BasicProperties(correlation_id= \
+                                                                 properties.correlation_id),
+                             body=json.dumps(status_message))
+
+    except TypeError:
+        status_message = {"status": "error", "details": "wrong format"}
         ch.basic_publish(exchange='',
                          routing_key=properties.reply_to,
                          properties=pika.BasicProperties(correlation_id= \
                                                              properties.correlation_id),
-                         body=json.dumps(final_json))
-
-    except TypeError:
-        status_message["status"] = "error"
-        status_message["details"] = "wrong format"
+                         body=json.dumps(status_message))
+    except Error as e:
+        print("error", e)
+        status_message = {"status": "error", "error": e.pgcode}
+        connection_db.rollback()
         ch.basic_publish(exchange='',
                          routing_key=properties.reply_to,
                          properties=pika.BasicProperties(correlation_id= \
@@ -162,9 +168,8 @@ def get_co_type_rpc(ch, method, properties, body):
                          body=json.dumps(status_message))
 
 
-def delete_co_type_rpc (ch, method, properties, body):
+def delete_co_type_rpc(ch, method, properties, body):
     recived_message = json.loads(body)
-    status_message ={}
     final_json = {}
     try:
         if recived_message["key"] == "id":
@@ -192,8 +197,7 @@ def delete_co_type_rpc (ch, method, properties, body):
                                      body=json.dumps(final_json))
             except Error as e:
                 print("error", e)
-                status_message["status"] = "error"
-                status_message["error"] = e.pgcode
+                status_message = {"status": "error", "error": e.pgcode}
                 connection_db.rollback()
                 ch.basic_publish(exchange='',
                                  routing_key=properties.reply_to,
@@ -221,9 +225,7 @@ def delete_co_type_rpc (ch, method, properties, body):
                                                                  properties.correlation_id),
                              body=json.dumps(final_json))
     except KeyError as e:
-        status_message["status"] = "error"
-        status_message["key"] = str(e)
-        status_message["details"] = "No key"
+        status_message= {"status": "error", "key": str(e), "details": "No key"}
         print(json.dumps(status_message))
         ch.basic_publish(exchange='',
                          routing_key=properties.reply_to,
@@ -232,8 +234,16 @@ def delete_co_type_rpc (ch, method, properties, body):
                          body=json.dumps(status_message))
 
     except TypeError:
-        status_message["status"] = "error"
-        status_message["details"] = "wrong format"
+        status_message= {"status": "error", "details": "wrong format"}
+        ch.basic_publish(exchange='',
+                         routing_key=properties.reply_to,
+                         properties=pika.BasicProperties(correlation_id= \
+                                                             properties.correlation_id),
+                         body=json.dumps(status_message))
+    except Error as e:
+        print("error", e)
+        status_message = {"status": "error", "error": e.pgcode}
+        connection_db.rollback()
         ch.basic_publish(exchange='',
                          routing_key=properties.reply_to,
                          properties=pika.BasicProperties(correlation_id= \
