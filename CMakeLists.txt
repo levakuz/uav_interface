@@ -164,7 +164,7 @@ include_directories(
    src/uav_listener.py
    src/sub.py
    src/SenderToROS.py
-   src/takeoff.py 
+   src/goal_objects.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

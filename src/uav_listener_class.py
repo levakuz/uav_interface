@@ -12,10 +12,10 @@ import multiprocessing as mp
 # import threading
 
 
-class UAV_listener(object):
-    """docstring"""
+class UavListener(object):
 
-    def __init__(self, uav_id, username_rmq, password_rmq, ip_rmq, db_username, db_password, db_ip, db_name, time_interval):
+    def __init__(self, uav_id, username_rmq, password_rmq, ip_rmq, db_username, db_password, db_ip, db_name,
+                 time_interval):
         """Constructor"""
         self.username_rmq = username_rmq
         self.password_rmq = password_rmq
@@ -38,11 +38,7 @@ class UAV_listener(object):
 
         self.channel = self.connection.channel()
 
-        self.channel.exchange_declare("geoposition", exchange_type='topic', passive=False,
-                                 durable=False, auto_delete=False, arguments=None)
-        self.channel.exchange_declare("battery", exchange_type='topic', passive=False,
-                                 durable=False, auto_delete=False, arguments=None)
-        self.channel.exchange_declare("altitude", exchange_type='topic', passive=False,
+        self.channel.exchange_declare("uav", exchange_type='topic', passive=False,
                                  durable=False, auto_delete=False, arguments=None)
         self.connection_db = psycopg2.connect(user=self.db_username,
                                          password=self.db_password,
@@ -124,11 +120,8 @@ class UAV_listener(object):
     def global_position_uav_callback(self, data):
         time = datetime.datetime.now()
         # rospy.loginfo(rospy.get_caller_id() + "I heard %s", data)
-        json_data = {}
-        json_data["id"] = self.uav_id
-        json_data["lattitude"] = '{:.2f}'.format(data.latitude)
-        json_data["longtitude"] = '{:.2f}'.format(data.longitude)
-        json_data["altitude"] = '{:.2f}'.format(data.altitude)
+        json_data = {"id": self.uav_id, "lattitude": '{:.2f}'.format(data.latitude),
+                     "longtitude": '{:.2f}'.format(data.longitude), "altitude": '{:.2f}'.format(data.altitude)}
         if (time - self.prev_time_global).total_seconds() > self.time_interval:
             self.prev_time_global = time
             if self.old_global_data != json_data:
@@ -178,7 +171,6 @@ class UAV_listener(object):
                         self.connection_db.commit()
                     except Error as e:
                         print("error", e)
-                        count = 0
                         self.connection_db.rollback()
                     # count = cursor.rowcount
                     # print(count, "Succesfull update")
