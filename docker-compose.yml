@@ -17,7 +17,7 @@ services:
 
 
     uav_simulation:
-        image: levakuz/uav_interface:0.15
+        image: levakuz/uav_interface:0.18
         hostname: localhost
         restart: always
         command: python3 src/Simulation.py
@@ -25,7 +25,7 @@ services:
             - rabbitmq
 
     uav_type_rpc:
-        image: levakuz/uav_interface:0.15
+        image: levakuz/uav_interface:0.18
         hostname: localhost
         restart: always
         command: python3 src/uav_type_rpc.py
@@ -33,7 +33,7 @@ services:
             - rabbitmq
 
     uav_rpc_simulation:
-        image: levakuz/uav_interface:0.15
+        image: levakuz/uav_interface:0.18
         hostname: localhost
         restart: always
         command: python3 src/uav_rpc_simulation.py
@@ -41,7 +41,7 @@ services:
             - rabbitmq
 
     uav_rpc:
-          image: levakuz/uav_interface:0.15
+          image: levakuz/uav_interface:0.18
           hostname: localhost
           restart: always
           command: python3 src/uav_rpc.py
@@ -49,7 +49,7 @@ services:
             - rabbitmq
 
     uav_role_rpc:
-          image: levakuz/uav_interface:0.15
+          image: levakuz/uav_interface:0.18
           hostname: localhost
           restart: always
           command: python3 src/uav_role_rpc.py
@@ -57,7 +57,7 @@ services:
             - rabbitmq
 
     co_weapon_rpc:
-          image: levakuz/uav_interface:0.15
+          image: levakuz/uav_interface:0.18
           hostname: localhost
           restart: always
           command: python3 src/co_weapon_rpc.py
@@ -65,7 +65,7 @@ services:
             - rabbitmq
 
     co_type_rpc:
-          image: levakuz/uav_interface:0.15
+          image: levakuz/uav_interface:0.18
           hostname: localhost
           restart: always
           command: python3 src/co_type_rpc.py
@@ -73,7 +73,7 @@ services:
             - rabbitmq
 
     co_rpc:
-          image: levakuz/uav_interface:0.15
+          image: levakuz/uav_interface:0.18
           hostname: localhost
           restart: always
           command: python3 src/co_rpc.py
@@ -81,7 +81,7 @@ services:
             - rabbitmq
 
     environment_simulation:
-          image: levakuz/uav_interface:0.15
+          image: levakuz/uav_interface:0.18
           hostname: localhost
           restart: always
           command: python3 src/environment_simulation.py
@@ -89,7 +89,7 @@ services:
             - rabbitmq
 
     environment_simulation_rpc:
-          image: levakuz/uav_interface:0.15
+          image: levakuz/uav_interface:0.18
           hostname: localhost
           restart: always
           command: python3 src/environment_simulation_rpc.py
@@ -97,15 +97,23 @@ services:
             - rabbitmq
 
     mission_input_rpc:
-          image: levakuz/uav_interface:0.15
+          image: levakuz/uav_interface:0.18
           hostname: localhost
           restart: always
-          command: python3 src/mission_rpc.py
+          command: python3 src/mission_input_rpc.py
           depends_on:
             - rabbitmq
 
+    mission_output_rpc:
+      image: levakuz/uav_interface:0.18
+      hostname: localhost
+      restart: always
+      command: python3 src/mission_output_rpc.py
+      depends_on:
+        - rabbitmq
+
     web-api:
-        image: levakuz/uav_interface:0.15
+        image: levakuz/uav_interface:0.18
         hostname: localhost
         restart: always
         command: python3 src/API_db.py
