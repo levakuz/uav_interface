@@ -7,23 +7,16 @@ import psycopg2
 from psycopg2 import Error
 import datetime
 
-class GcClass(object):
-    def __init__(self, name, co_id, username_rmq, password_rmq, ip_rmq, db_username, db_password, db_ip, db_name,
-                 time_interval):
+
+class CoListener:
+    def __init__(self, name, co_id, username_rmq, password_rmq, ip_rmq):
         """Constructor"""
         self.name = name
         self.username_rmq = username_rmq
         self.password_rmq = password_rmq
         self.ip_rmq = ip_rmq
         self.co_id = co_id
-        self.db_username = db_username
-        self.db_password = db_password
-        self.db_ip = db_ip
-        self.db_name = db_name
-        self.time_interval = time_interval
         self.old_pose_data = self.old_goal_data = self.old_trajectory_data = self.old_velocity_data = 0
-        self.prev_time_pose = datetime.datetime.now()
-        self.prev_time_goal = self.prev_time_trajectory = self.prev_time_velocity = self.prev_time_pose
         self.credentials = pika.PlainCredentials(self.username_rmq, self.password_rmq)
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(self.ip_rmq,
                                                                             5672,
@@ -46,7 +39,6 @@ class GcClass(object):
                                               database=self.db_name)
 
     def pose_co_callback(self, data):
-        time = datetime.datetime.now()
         rospy.loginfo(rospy.get_caller_id() + "I heard %s", data)
         json_data = {"coordinates": {}, "angles": {}}
         json_data["coordinates"]["x"] = data.position.x
@@ -57,66 +49,63 @@ class GcClass(object):
         json_data["angles"]["z"] = data.orientation.z
         json_data["angles"]["w"] = data.orientation.w
         print(json_data)
-        if (time - self.prev_time_pose).total_seconds() > self.time_interval:
-            self.prev_time_pose = time
-            if self.old_pose_data != json_data:
-                # print("here")
-                try:
-                    self.channel.basic_publish(
-                        exchange='geoposition',
-                        routing_key="CO",
-                        body=json.dumps(json_data),
-                        properties=pika.BasicProperties(
-                            delivery_mode=2,
-                        ))
-                except Exception as e:
-                    print(e)
-                    self.connection = pika.BlockingConnection(pika.ConnectionParameters(self.ip_rmq,
-                                                                                        5672,
-                                                                                        '/',
-                                                                                        self.credentials,
-                                                                                        blocked_connection_timeout=0,
-                                                                                        heartbeat=0))
-                    self.channel = self.connection.channel()
-                    self.channel.basic_publish(
-                        exchange='geoposition',
-                        routing_key="CO",
-                        body=json.dumps(json_data),
-                        properties=pika.BasicProperties(
-                            delivery_mode=2,
-                        ))
-                try:
-                    cursor = self.connection_db.cursor()
-                    insert_query = """ UPDATE co_dynamic_params SET position = '{}' WHERE time = '{}' AND id = {};
-                       """.format(json.dumps(json_data), time.time().strftime("%H:%M:%S"), self.co_id)
-                    cursor.execute(insert_query)
-                    self.connection_db.commit()
-                    count = cursor.rowcount
-                except Error as e:
-                    print("error", e)
-                    count = 0
-                    self.connection_db.rollback()
-                # print(count, "Succesfull update")
-                if count == 0:
-                    try:
-                        cursor = self.connection_db.cursor()
-                        insert_query = """ INSERT INTO co_dynamic_params (time, id, position)
-                                                                      VALUES (%s, %s, %s)"""
-                        item_tuple = (time.time().strftime("%H:%M:%S"), self.co_id, json.dumps(json_data))
-                        cursor.execute(insert_query, item_tuple)
-                        self.connection_db.commit()
-                    except Error as e:
-                        print("error", e)
-                        count = 0
-                        self.connection_db.rollback()
-
-                        # count = cursor.rowcount
-                    # print(count, "Succesfull INSERT")
-                self.old_pose_data = json_data
+        if self.old_pose_data != json_data:
+            # print("here")
+            try:
+                self.channel.basic_publish(
+                    exchange='geoposition',
+                    routing_key="CO",
+                    body=json.dumps(json_data),
+                    properties=pika.BasicProperties(
+                        delivery_mode=2,
+                    ))
+            except Exception as e:
+                print(e)
+                self.connection = pika.BlockingConnection(pika.ConnectionParameters(self.ip_rmq,
+                                                                                    5672,
+                                                                                    '/',
+                                                                                    self.credentials,
+                                                                                    blocked_connection_timeout=0,
+                                                                                    heartbeat=0))
+                self.channel = self.connection.channel()
+                self.channel.basic_publish(
+                    exchange='geoposition',
+                    routing_key="CO",
+                    body=json.dumps(json_data),
+                    properties=pika.BasicProperties(
+                        delivery_mode=2,
+                    ))
+            # try:
+            #     cursor = self.connection_db.cursor()
+            #     insert_query = """ UPDATE co_dynamic_params SET position = '{}' WHERE time = '{}' AND id = {};
+            #        """.format(json.dumps(json_data), time.time().strftime("%H:%M:%S"), self.co_id)
+            #     cursor.execute(insert_query)
+            #     self.connection_db.commit()
+            #     count = cursor.rowcount
+            # except Error as e:
+            #     print("error", e)
+            #     count = 0
+            #     self.connection_db.rollback()
+            # # print(count, "Succesfull update")
+            # if count == 0:
+            #     try:
+            #         cursor = self.connection_db.cursor()
+            #         insert_query = """ INSERT INTO co_dynamic_params (time, id, position)
+            #                                                       VALUES (%s, %s, %s)"""
+            #         item_tuple = (time.time().strftime("%H:%M:%S"), self.co_id, json.dumps(json_data))
+            #         cursor.execute(insert_query, item_tuple)
+            #         self.connection_db.commit()
+            #     except Error as e:
+            #         print("error", e)
+            #         count = 0
+            #         self.connection_db.rollback()
+            #
+            #         # count = cursor.rowcount
+            #     # print(count, "Succesfull INSERT")
+            self.old_pose_data = json_data
         # rospy.sleep(5)
 
     def goal_co_callback(self, data):
-        time = datetime.datetime.now()
         rospy.loginfo(rospy.get_caller_id() + "I heard %s", data)
         json_data = {"coordinates": {}, "angles": {}}
         json_data["coordinates"]["x"] = data.position.x
@@ -133,66 +122,63 @@ class GcClass(object):
             properties=pika.BasicProperties(
                 delivery_mode=2,
             ))
-        if (time - self.prev_time_goal).total_seconds() > self.time_interval:
-            self.prev_time_goal = time
-            if self.old_goal_data != json_data:
-                # print("here")
-                try:
-                    self.channel.basic_publish(
-                        exchange='goals',
-                        routing_key="CO",
-                        body=json.dumps(json_data),
-                        properties=pika.BasicProperties(
-                            delivery_mode=2,
-                        ))
-                except Exception as e:
-                    print(e)
-                    self.connection = pika.BlockingConnection(pika.ConnectionParameters(self.ip_rmq,
-                                                                                        5672,
-                                                                                        '/',
-                                                                                        self.credentials,
-                                                                                        blocked_connection_timeout=0,
-                                                                                        heartbeat=0))
-                    self.channel = self.connection.channel()
-                    self.channel.basic_publish(
-                        exchange='goals',
-                        routing_key="CO",
-                        body=json.dumps(json_data),
-                        properties=pika.BasicProperties(
-                            delivery_mode=2,
-                        ))
-                try:
-                    cursor = self.connection_db.cursor()
-                    insert_query = """ UPDATE co_dynamic_params SET goal = '{}' WHERE time = '{}' AND id = {};
-                       """.format(json.dumps(json_data), time.time().strftime("%H:%M:%S"), self.co_id)
-                    cursor.execute(insert_query)
-                    self.connection_db.commit()
-                    count = cursor.rowcount
-                except Error as e:
-                    print("error", e)
-                    count = 0
-                    self.connection_db.rollback()
-                # print(count, "Succesfull update")
-                if count == 0:
-                    try:
-                        cursor = self.connection_db.cursor()
-                        insert_query = """ INSERT INTO co_dynamic_params (time, id, goal)
-                                                                      VALUES (%s, %s, %s)"""
-                        item_tuple = (time.time().strftime("%H:%M:%S"), self.co_id, json.dumps(json_data))
-                        cursor.execute(insert_query, item_tuple)
-                        self.connection_db.commit()
-                    except Error as e:
-                        print("error", e)
-                        count = 0
-                        self.connection_db.rollback()
+        if self.old_goal_data != json_data:
+            # print("here")
+            try:
+                self.channel.basic_publish(
+                    exchange='goals',
+                    routing_key="CO",
+                    body=json.dumps(json_data),
+                    properties=pika.BasicProperties(
+                        delivery_mode=2,
+                    ))
+            except Exception as e:
+                print(e)
+                self.connection = pika.BlockingConnection(pika.ConnectionParameters(self.ip_rmq,
+                                                                                    5672,
+                                                                                    '/',
+                                                                                    self.credentials,
+                                                                                    blocked_connection_timeout=0,
+                                                                                    heartbeat=0))
+                self.channel = self.connection.channel()
+                self.channel.basic_publish(
+                    exchange='goals',
+                    routing_key="CO",
+                    body=json.dumps(json_data),
+                    properties=pika.BasicProperties(
+                        delivery_mode=2,
+                    ))
+            # try:
+            #     cursor = self.connection_db.cursor()
+            #     insert_query = """ UPDATE co_dynamic_params SET goal = '{}' WHERE time = '{}' AND id = {};
+            #        """.format(json.dumps(json_data), time.time().strftime("%H:%M:%S"), self.co_id)
+            #     cursor.execute(insert_query)
+            #     self.connection_db.commit()
+            #     count = cursor.rowcount
+            # except Error as e:
+            #     print("error", e)
+            #     count = 0
+            #     self.connection_db.rollback()
+            # # print(count, "Succesfull update")
+            # if count == 0:
+            #     try:
+            #         cursor = self.connection_db.cursor()
+            #         insert_query = """ INSERT INTO co_dynamic_params (time, id, goal)
+            #                                                       VALUES (%s, %s, %s)"""
+            #         item_tuple = (time.time().strftime("%H:%M:%S"), self.co_id, json.dumps(json_data))
+            #         cursor.execute(insert_query, item_tuple)
+            #         self.connection_db.commit()
+            #     except Error as e:
+            #         print("error", e)
+            #         count = 0
+            #         self.connection_db.rollback()
 
-                        # count = cursor.rowcount
-                    # print(count, "Succesfull INSERT")
-                self.old_goal_data = json_data
+                    # count = cursor.rowcount
+                # print(count, "Succesfull INSERT")
+            self.old_goal_data = json_data
         # rospy.sleep(5)
 
     def trajectory_co_callback(self, data):
-        time = datetime.datetime.now()
         rospy.loginfo(rospy.get_caller_id() + "I heard %s", data)
         json_data = []
         point_data = {"coordinates": {}, "angles": {}}
@@ -205,66 +191,63 @@ class GcClass(object):
             point_data["angles"]["z"] = point.orientation.z
             point_data["angles"]["w"] = point.orientation.w
             json_data.append(point_data)
-        if (time - self.prev_time_trajectory).total_seconds() > self.time_interval:
-            self.prev_time_trajectory = time
-            if self.old_trajectory_data != json_data:
-                # print("here")
-                try:
-                    self.channel.basic_publish(
-                        exchange='trajectory',
-                        routing_key="CO",
-                        body=json.dumps(json_data),
-                        properties=pika.BasicProperties(
-                            delivery_mode=2,
-                        ))
-                except Exception as e:
-                    print(e)
-                    self.connection = pika.BlockingConnection(pika.ConnectionParameters(self.ip_rmq,
-                                                                                        5672,
-                                                                                        '/',
-                                                                                        self.credentials,
-                                                                                        blocked_connection_timeout=0,
-                                                                                        heartbeat=0))
-                    self.channel = self.connection.channel()
-                    self.channel.basic_publish(
-                        exchange='trajectory',
-                        routing_key="CO",
-                        body=json.dumps(json_data),
-                        properties=pika.BasicProperties(
-                            delivery_mode=2,
-                        ))
-                try:
-                    cursor = self.connection_db.cursor()
-                    insert_query = """ UPDATE co_dynamic_params SET trajectory = '{}' WHERE time = '{}' AND id = {};
-                               """.format(json.dumps(json_data), time.time().strftime("%H:%M:%S"), self.co_id)
-                    cursor.execute(insert_query)
-                    self.connection_db.commit()
-                    count = cursor.rowcount
-                except Error as e:
-                    print("error", e)
-                    count = 0
-                    self.connection_db.rollback()
-                # print(count, "Succesfull update")
-                if count == 0:
-                    try:
-                        cursor = self.connection_db.cursor()
-                        insert_query = """ INSERT INTO co_dynamic_params (time, id, trajectory)
-                                                                              VALUES (%s, %s, %s)"""
-                        item_tuple = (time.time().strftime("%H:%M:%S"), self.co_id, json.dumps(json_data))
-                        cursor.execute(insert_query, item_tuple)
-                        self.connection_db.commit()
-                    except Error as e:
-                        print("error", e)
-                        count = 0
-                        self.connection_db.rollback()
+        if self.old_trajectory_data != json_data:
+            # print("here")
+            try:
+                self.channel.basic_publish(
+                    exchange='trajectory',
+                    routing_key="CO",
+                    body=json.dumps(json_data),
+                    properties=pika.BasicProperties(
+                        delivery_mode=2,
+                    ))
+            except Exception as e:
+                print(e)
+                self.connection = pika.BlockingConnection(pika.ConnectionParameters(self.ip_rmq,
+                                                                                    5672,
+                                                                                    '/',
+                                                                                    self.credentials,
+                                                                                    blocked_connection_timeout=0,
+                                                                                    heartbeat=0))
+                self.channel = self.connection.channel()
+                self.channel.basic_publish(
+                    exchange='trajectory',
+                    routing_key="CO",
+                    body=json.dumps(json_data),
+                    properties=pika.BasicProperties(
+                        delivery_mode=2,
+                    ))
+            # try:
+            #     cursor = self.connection_db.cursor()
+            #     insert_query = """ UPDATE co_dynamic_params SET trajectory = '{}' WHERE time = '{}' AND id = {};
+            #                """.format(json.dumps(json_data), time.time().strftime("%H:%M:%S"), self.co_id)
+            #     cursor.execute(insert_query)
+            #     self.connection_db.commit()
+            #     count = cursor.rowcount
+            # except Error as e:
+            #     print("error", e)
+            #     count = 0
+            #     self.connection_db.rollback()
+            # # print(count, "Succesfull update")
+            # if count == 0:
+            #     try:
+            #         cursor = self.connection_db.cursor()
+            #         insert_query = """ INSERT INTO co_dynamic_params (time, id, trajectory)
+            #                                                               VALUES (%s, %s, %s)"""
+            #         item_tuple = (time.time().strftime("%H:%M:%S"), self.co_id, json.dumps(json_data))
+            #         cursor.execute(insert_query, item_tuple)
+            #         self.connection_db.commit()
+            #     except Error as e:
+            #         print("error", e)
+            #         count = 0
+            #         self.connection_db.rollback()
 
-                        # count = cursor.rowcount
-                    # print(count, "Succesfull INSERT")
-                self.old_trajectory_data = json_data
+                    # count = cursor.rowcount
+                # print(count, "Succesfull INSERT")
+            self.old_trajectory_data = json_data
         # rospy.sleep(5)
 
     def cmd_vel_co_callback(self, data):
-        time = datetime.datetime.now()
         rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
         json_data = {"linear": {}, "angular": {}}
         json_data["linear"]["x"] = data.linear.x
@@ -273,62 +256,60 @@ class GcClass(object):
         json_data["angular"]["x"] = data.angular.x
         json_data["angular"]["y"] = data.angular.y
         json_data["angular"]["z"] = data.angular.z
-        if (time - self.prev_time_velocity).total_seconds() > self.time_interval:
-            self.prev_time_velocity = time
-            if self.old_velocity_data != json_data:
-                # print("here")
-                try:
-                    self.channel.basic_publish(
-                        exchange='velocity',
-                        routing_key="CO",
-                        body=json.dumps(json_data),
-                        properties=pika.BasicProperties(
-                            delivery_mode=2,
-                        ))
-                except Exception as e:
-                    print(e)
-                    self.connection = pika.BlockingConnection(pika.ConnectionParameters(self.ip_rmq,
-                                                                                        5672,
-                                                                                        '/',
-                                                                                        self.credentials,
-                                                                                        blocked_connection_timeout=0,
-                                                                                        heartbeat=0))
-                    self.channel = self.connection.channel()
-                    self.channel.basic_publish(
-                        exchange='velocity',
-                        routing_key="CO",
-                        body=json.dumps(json_data),
-                        properties=pika.BasicProperties(
-                            delivery_mode=2,
-                        ))
-                try:
-                    cursor = self.connection_db.cursor()
-                    insert_query = """ UPDATE co_dynamic_params SET velocity = '{}' WHERE time = '{}' AND id = {};
-                               """.format(json.dumps(json_data), time.time().strftime("%H:%M:%S"), self.co_id)
-                    cursor.execute(insert_query)
-                    self.connection_db.commit()
-                    count = cursor.rowcount
-                except Error as e:
-                    print("error", e)
-                    count = 0
-                    self.connection_db.rollback()
-                # print(count, "Succesfull update")
-                if count == 0:
-                    try:
-                        cursor = self.connection_db.cursor()
-                        insert_query = """ INSERT INTO co_dynamic_params (time, id, velocity)
-                                                                              VALUES (%s, %s, %s)"""
-                        item_tuple = (time.time().strftime("%H:%M:%S"), self.co_id, json.dumps(json_data))
-                        cursor.execute(insert_query, item_tuple)
-                        self.connection_db.commit()
-                    except Error as e:
-                        print("error", e)
-                        count = 0
-                        self.connection_db.rollback()
+        if self.old_velocity_data != json_data:
+            # print("here")
+            try:
+                self.channel.basic_publish(
+                    exchange='velocity',
+                    routing_key="CO",
+                    body=json.dumps(json_data),
+                    properties=pika.BasicProperties(
+                        delivery_mode=2,
+                    ))
+            except Exception as e:
+                print(e)
+                self.connection = pika.BlockingConnection(pika.ConnectionParameters(self.ip_rmq,
+                                                                                    5672,
+                                                                                    '/',
+                                                                                    self.credentials,
+                                                                                    blocked_connection_timeout=0,
+                                                                                    heartbeat=0))
+                self.channel = self.connection.channel()
+                self.channel.basic_publish(
+                    exchange='velocity',
+                    routing_key="CO",
+                    body=json.dumps(json_data),
+                    properties=pika.BasicProperties(
+                        delivery_mode=2,
+                    ))
+            # try:
+            #     cursor = self.connection_db.cursor()
+            #     insert_query = """ UPDATE co_dynamic_params SET velocity = '{}' WHERE time = '{}' AND id = {};
+            #                """.format(json.dumps(json_data), time.time().strftime("%H:%M:%S"), self.co_id)
+            #     cursor.execute(insert_query)
+            #     self.connection_db.commit()
+            #     count = cursor.rowcount
+            # except Error as e:
+            #     print("error", e)
+            #     count = 0
+            #     self.connection_db.rollback()
+            # # print(count, "Succesfull update")
+            # if count == 0:
+            #     try:
+            #         cursor = self.connection_db.cursor()
+            #         insert_query = """ INSERT INTO co_dynamic_params (time, id, velocity)
+            #                                                               VALUES (%s, %s, %s)"""
+            #         item_tuple = (time.time().strftime("%H:%M:%S"), self.co_id, json.dumps(json_data))
+            #         cursor.execute(insert_query, item_tuple)
+            #         self.connection_db.commit()
+            #     except Error as e:
+            #         print("error", e)
+            #         count = 0
+            #         self.connection_db.rollback()
 
-                        # count = cursor.rowcount
-                    # print(count, "Succesfull INSERT")
-                self.old_velocity_data = json_data
+                    # count = cursor.rowcount
+                # print(count, "Succesfull INSERT")
+            self.old_velocity_data = json_data
         # rospy.sleep(5)
 
     def listener(self):

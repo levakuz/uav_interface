@@ -4,7 +4,6 @@ import json
 import pika
 import uuid
 
-
 class FibonacciRpcClient(object):
 
     def __init__(self):
@@ -53,7 +52,8 @@ fibonacci_rpc = FibonacciRpcClient()
 # # recived_message = {'id': 2, "time_zero": 1, "uavs":[{"flight_number":"ss1","launch_time":1619113475,"course":273.3,"arrival":1619116375},
 # {"flight_number":"ss2","launch_time":1619111975,"course":273.3,"arrival":1619116375}]}
 # recived_message = {"id": 1}
-recived_message = {"key": "array", "id": [111,112,113,114,115,116,117,118,119]}
+recived_message = {}
+recived_message = {"key": "array", "id": [111,1111,1211111,1113,1114,1115,1611,1117], "TL":{"x": -15, "y": 30}, "BR": {"x": 5, "y": 5} }
 print(" [x] Requesting fib(30)")
 response = fibonacci_rpc.call(json.dumps(recived_message))
 print(" [.] Got %r" % json.loads(response))
