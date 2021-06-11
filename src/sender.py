@@ -32,8 +32,8 @@ class FibonacciRpcClient(object):
         self.response = None
         self.corr_id = str(uuid.uuid4())
         self.channel.basic_publish(
-            exchange='',
-            routing_key='spawn_co_rpc',
+            exchange='save_data',
+            routing_key='',
             properties=pika.BasicProperties(
                 reply_to=self.callback_queue,
                 correlation_id=self.corr_id,
@@ -52,8 +52,13 @@ fibonacci_rpc = FibonacciRpcClient()
 # # recived_message = {'id': 2, "time_zero": 1, "uavs":[{"flight_number":"ss1","launch_time":1619113475,"course":273.3,"arrival":1619116375},
 # {"flight_number":"ss2","launch_time":1619111975,"course":273.3,"arrival":1619116375}]}
 # recived_message = {"id": 1}
-recived_message = {}
-recived_message = {"key": "array", "id": [111,1111,1211111,1113,1114,1115,1611,1117], "TL":{"x": -15, "y": 30}, "BR": {"x": 5, "y": 5} }
+recived_message = {"request": "save"}
+# recived_message = {"key": "array", "id": [111,1111,1211111,1113,1114,1115,1611,1117], "TL":{"x": -15, "y": 30}, "BR": {"x": 5, "y": 5} }
+# recived_message = {}
+# recived_message["tail_number"] = 123
+# recived_message["uav_role"] = 1
+# recived_message["fuel_resource"] = 123
+# recived_message["time_for_prepare"] = 123
 print(" [x] Requesting fib(30)")
 response = fibonacci_rpc.call(json.dumps(recived_message))
 print(" [.] Got %r" % json.loads(response))

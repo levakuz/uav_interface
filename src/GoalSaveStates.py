@@ -148,6 +148,8 @@ class GoalObjectsSaver:
             queue=queue_name, on_message_callback=self.check_message, auto_ack=True)
         self.channel.start_consuming()
 
-goalsaves = GoalObjectsSaver("admin", "admin", '192.168.0.17', "postgres", "password", "192.168.0.17", "postgres")
-goalsaves.enable_rmq_listener()
+while not rospy.is_shutdown():
+    goalsaves = GoalObjectsSaver("admin", "admin", '192.168.0.17', "postgres", "password", "192.168.0.17", "postgres")
+    goalsaves.enable_rmq_listener()
 rospy.spin()
+

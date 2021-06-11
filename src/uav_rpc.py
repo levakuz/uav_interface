@@ -50,10 +50,24 @@ def add_uav_rpc(ch, method, properties, body):
                              properties=pika.BasicProperties(correlation_id= \
                                                                  properties.correlation_id),
                              body=json.dumps(status_message))
+            cursor = connection_db.cursor()
+            insert_query = """ SELECT * FROM uav WHERE tail_number = '{}';
+                                                """.format(recived_message["tail_number"])
+            cursor.execute(insert_query)
+            record = cursor.fetchone()
+            print(record[0])
+            cursor.close()
+            ch.basic_publish(
+                            exchange='uav_create',
+                            routing_key="",
+                            body=json.dumps({"status": "created", "id": record[0]}),
+                            properties=pika.BasicProperties(
+                                delivery_mode=2,
+                            ))
         else:
             status_message["status"] = "error"
             status_message["details"] = "Not found uav role"
-            ch.basic_publish(exchange='',
+            channel.basic_publish(exchange='',
                              routing_key=properties.reply_to,
                              properties=pika.BasicProperties(correlation_id= \
                                                                  properties.correlation_id),

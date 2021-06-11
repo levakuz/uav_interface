@@ -192,6 +192,6 @@ class GoalObjectsListener:
         rospy.Subscriber("/gazebo/model_states", ModelStates, self.gazebo_co_callback)
 
 #example
-# lisener = GoalObjectsListener("admin", "admin", "192.168.0.17", "postgres", "password", "192.168.0.17", "postgres", 20)
-# lisener.listener()
-# rospy.spin()
+lisener = GoalObjectsListener("admin", "admin", "192.168.0.17", "postgres", "password", "192.168.0.17", "postgres", 20)
+lisener.listener()
+rospy.spin()
