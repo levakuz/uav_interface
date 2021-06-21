@@ -26,7 +26,6 @@ channel.exchange_declare("temperature", exchange_type='topic', passive=False,
 
 
 connection = psycopg2.connect(user="postgres",
-                              # пароль, который указали при установке PostgreSQL
                               password="vfvfcdtnf",
                               host="127.0.0.1",
                               port="5432",
@@ -39,8 +38,8 @@ def wind_velocity(data):
     vel_data = {"velocity": data.data}
     print(vel_data)
     channel.basic_publish(
-        exchange='velocity',
-        routing_key="wind",
+        exchange='environment',
+        routing_key="wind_velocity",
         body=json.dumps(vel_data),
         properties=pika.BasicProperties(
             delivery_mode=2,
@@ -56,8 +55,8 @@ def wind_direction_callback(data):
     vel_data["direction"]["y"] = data.direction.y
     vel_data["direction"]["z"] = data.direction.z
     channel.basic_publish(
-        exchange='direction',
-        routing_key="wind",
+        exchange='environment',
+        routing_key="wind_direction",
         body=json.dumps(vel_data),
         properties=pika.BasicProperties(
             delivery_mode=2,
@@ -68,8 +67,8 @@ def temperature_callback(data):
     rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
     temp_data = {"temperature": data.data}
     channel.basic_publish(
-        exchange='temperature',
-        routing_key="",
+        exchange='environment',
+        routing_key="temperature",
         body=json.dumps(temp_data),
         properties=pika.BasicProperties(
             delivery_mode=2,

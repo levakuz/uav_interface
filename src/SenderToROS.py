@@ -63,7 +63,6 @@ connection_db = psycopg2.connect(user="postgres",
                               database="postgres_db")
 
 
-
 def goal_co_callback(ch, method, properties, body):
     time = datetime.datetime.now().time()
     pub = rospy.Publisher('/sim_target/waypoint', PoseStamped, queue_size=10)

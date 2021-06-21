@@ -5,11 +5,9 @@ from geometry_msgs.msg import Quaternion, PoseStamped
 from sensor_msgs.msg import BatteryState
 from mavros_msgs.msg import Altitude
 from sensor_msgs.msg import NavSatFix
-import pika
 import psycopg2
 from psycopg2 import Error
 import datetime
-import multiprocessing as mp
 import threading
 
 

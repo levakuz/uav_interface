@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import time
-
 import rospy
 import json
 from geometry_msgs.msg import Quaternion, PoseStamped
@@ -9,7 +7,6 @@ from mavros_msgs.msg import Altitude
 from sensor_msgs.msg import NavSatFix
 import pika
 import psycopg2
-from psycopg2 import Error
 import datetime
 import multiprocessing as mp
 

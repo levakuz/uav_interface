@@ -55,8 +55,8 @@ class UavListener(object):
             # print("here")
             try:
                 self.channel.basic_publish(
-                    exchange='geoposition',
-                    routing_key="UAV_local",
+                    exchange='UAV',
+                    routing_key="geoposition_local",
                     body= json.dumps(json_data),
                     properties=pika.BasicProperties(
                         delivery_mode=2,
@@ -71,8 +71,8 @@ class UavListener(object):
                                                                                     heartbeat=0))
                 self.channel = self.connection.channel()
                 self.channel.basic_publish(
-                    exchange='geoposition',
-                    routing_key="UAV_local",
+                    exchange='UAV',
+                    routing_key="geoposition_local",
                     body=json.dumps(json_data),
                     properties=pika.BasicProperties(
                         delivery_mode=2,
@@ -115,8 +115,8 @@ class UavListener(object):
         if self.old_global_data != json_data:
             try:
                 self.channel.basic_publish(
-                    exchange='geoposition',
-                    routing_key="UAV_local",
+                    exchange='UAV',
+                    routing_key="geoposition_global",
                     body=json.dumps(json_data),
                     properties=pika.BasicProperties(
                         delivery_mode=2,
@@ -131,8 +131,8 @@ class UavListener(object):
                                                                                     heartbeat=0))
                 self.channel = self.connection.channel()
                 self.channel.basic_publish(
-                    exchange='geoposition',
-                    routing_key="UAV_local",
+                    exchange='UAV',
+                    routing_key="geoposition_global",
                     body=json.dumps(json_data),
                     properties=pika.BasicProperties(
                         delivery_mode=2,
@@ -173,8 +173,8 @@ class UavListener(object):
         if self.altitude_old_data != altitude:
             try:
                 self.channel.basic_publish(
-                    exchange='altitude',
-                    routing_key="UAV_global",
+                    exchange='UAV',
+                    routing_key="altitude",
                     body=json.dumps(json_data),
                     properties=pika.BasicProperties(
                         delivery_mode=2,
@@ -189,8 +189,8 @@ class UavListener(object):
                                                                                     heartbeat=0))
                 self.channel = self.connection.channel()
                 self.channel.basic_publish(
-                    exchange='altitude',
-                    routing_key="UAV_global",
+                    exchange='UAV',
+                    routing_key="altitude",
                     body=json.dumps(json_data),
                     properties=pika.BasicProperties(
                         delivery_mode=2,
@@ -231,8 +231,8 @@ class UavListener(object):
         if self.old_voltage_data != voltage:
             try:
                 self.channel.basic_publish(
-                    exchange='battery',
-                    routing_key="UAV_global",
+                    exchange='UAV',
+                    routing_key="battery",
                     body=json.dumps(json_data),
                     properties=pika.BasicProperties(
                         delivery_mode=2,
@@ -247,8 +247,8 @@ class UavListener(object):
                                                                                     heartbeat=0))
                 self.channel = self.connection.channel()
                 self.channel.basic_publish(
-                    exchange='battery',
-                    routing_key="UAV_global",
+                    exchange='UAV',
+                    routing_key="battery",
                     body=json.dumps(json_data),
                     properties=pika.BasicProperties(
                         delivery_mode=2,
