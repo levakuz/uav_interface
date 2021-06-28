@@ -5,6 +5,9 @@ from geometry_msgs.msg import Quaternion, Pose, Point
 import pika
 import json
 import random
+from Heightmap import Heightmap
+import PathPlanner as pp
+
 credentials = pika.PlainCredentials('admin', 'admin')
 connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.0.17',
                                                                5672,
@@ -15,8 +18,14 @@ channel = connection.channel()
 
 
 def spawn_co_rpc(ch, method, properties, body):
+    hm = Heightmap()
+    hmap, height, width = hm.prepare_heightmap()
+    map_handler = pp.PathPlanner(hmap, height, width)
+    map_handler.gridmap_preparing()
     recived_message = json.loads(body)
-
+    obstacles = map_handler.detect_obstacles()
+    #print(map_handler.obstacles)
+    # print(map_handler.map)
     try:
         topleft = recived_message["TL"]
         bottomright = recived_message["BR"]
@@ -35,11 +44,21 @@ def spawn_co_rpc(ch, method, properties, body):
             for i in recived_message["id"]:
                 rover_name = "p3at" + str(i)
                 spawn_model_client = rospy.ServiceProxy('/gazebo/spawn_urdf_model', SpawnModel)
-                spawn_model_client(rover_name,
-                                   open("/home/levakuz/catkin/src/targets_path_planning/urdf/pioneer3at_1.urdf", 'r').read(),
-                                   "/rover", Pose(position=Point(random.uniform(topleft["x"], bottomright["x"]),
-                                                                 random.uniform(topleft["y"], bottomright["y"]), 2),
-                                                  orientation=Quaternion(0, 0, 0, 0)), "world")
+                spawnpoint_is_obstacle = True
+                while spawnpoint_is_obstacle:  # Проверяем является ли точка препятствием
+                    new_point = (str(int(random.uniform(int(topleft["x"]), int(bottomright["x"])))),
+                                 str(int(random.uniform(int(topleft["y"]), int(bottomright["y"])))))
+                    print("Checking")
+                    if new_point not in map_handler.obstacles: # Если нет в list с препятствиями, то спавним
+                        spawn_model_client(
+                            rover_name,
+                            open("/home/levakuz/catkin/src/targets_path_planning/urdf/pioneer3at_1.urdf", 'r').read(),
+                            "/rover",
+                            Pose(position=Point(int(new_point[0]), int(new_point[1]), 2),
+                                 orientation=Quaternion(0, 0, 0, 0)), "world")
+                        spawnpoint_is_obstacle = False
+                        print("Done")
+
             final_json = {"status": "success"}
             ch.basic_publish(exchange='',
                              routing_key=properties.reply_to,
