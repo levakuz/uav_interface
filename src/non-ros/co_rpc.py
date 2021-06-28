@@ -5,7 +5,7 @@ import json
 import random
 from psycopg2 import Error
 credentials = pika.PlainCredentials('admin', 'admin')
-connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.0.17',
+connection = pika.BlockingConnection(pika.ConnectionParameters('localhost',
                                                                5672,
                                                                '/',
                                                                credentials,blocked_connection_timeout=0,heartbeat=0))
@@ -15,7 +15,7 @@ channel = connection.channel()
 
 connection_db = psycopg2.connect(user="postgres",
                               password="password",
-                              host="192.168.0.17",
+                              host="localhost",
                               port="5432",
                               database="postgres")
 

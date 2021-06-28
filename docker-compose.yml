@@ -20,7 +20,7 @@ services:
         image: levakuz/uav_interface:0.2
         hostname: localhost
         restart: always
-        command: python3 src/non-ros/Simulation.py
+        command: python3 src/simulation/Simulation.py
         depends_on:
             - rabbitmq
 
@@ -36,7 +36,7 @@ services:
         image: levakuz/uav_interface:0.18
         hostname: localhost
         restart: always
-        command: python3 src/non-ros/uav_rpc_simulation.py
+        command: python3 src/simulation/uav_rpc_simulation.py
         depends_on:
             - rabbitmq
 
@@ -84,7 +84,7 @@ services:
           image: levakuz/uav_interface:0.2
           hostname: localhost
           restart: always
-          command: python3 src/non-ros/environment_simulation.py
+          command: python3 src/simulation/environment_simulation.py
           depends_on:
             - rabbitmq
 

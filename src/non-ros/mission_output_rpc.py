@@ -14,7 +14,7 @@ channel = connection.channel()
 
 connection_db = psycopg2.connect(user="postgres",
                                  password="password",
-                                 host="192.168.0.17",
+                                 host="localhost",
                                  port="5432",
                                  database="postgres")
 

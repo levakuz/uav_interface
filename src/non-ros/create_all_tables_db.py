@@ -297,8 +297,8 @@ def create_table_uav_type(connection):
 if __name__ == "__main__":
     connection = psycopg2.connect(user="postgres",
                                       # пароль, который указали при установке PostgreSQL
-                                      password="vfvfcdtnf",
-                                      host="127.0.0.1",
+                                      password="password",
+                                      host="localhost",
                                       port="5432",
                                       database="postgres_db")
     create_table_co(connection)
