@@ -6,7 +6,7 @@ import threading
 from UaVSaveStates import UavSaver
 import pika
 credentials = pika.PlainCredentials("admin", "admin")
-connection = pika.BlockingConnection(pika.ConnectionParameters("localhost",
+connection = pika.BlockingConnection(pika.ConnectionParameters("192.168.1.65",
                                                                     5672,
                                                                     '/',
                                                                     credentials, blocked_connection_timeout=0,

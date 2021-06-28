@@ -4,6 +4,7 @@ import psycopg2
 import json
 import random
 from psycopg2 import Error
+
 credentials = pika.PlainCredentials('admin', 'admin')
 connection = pika.BlockingConnection(pika.ConnectionParameters('localhost',
                                                                5672,

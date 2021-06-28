@@ -298,7 +298,7 @@ if __name__ == "__main__":
     connection = psycopg2.connect(user="postgres",
                                       # пароль, который указали при установке PostgreSQL
                                       password="password",
-                                      host="localhost",
+                                      host="192.168.1.65",
                                       port="5432",
                                       database="postgres_db")
     create_table_co(connection)

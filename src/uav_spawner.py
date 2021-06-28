@@ -6,7 +6,7 @@ import pika
 import json
 import random
 credentials = pika.PlainCredentials('admin', 'admin')
-connection = pika.BlockingConnection(pika.ConnectionParameters('localhost',
+connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.1.65',
                                                                5672,
                                                                '/',
                                                                credentials, blocked_connection_timeout=0, heartbeat=0))

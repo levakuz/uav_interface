@@ -11,7 +11,7 @@ import datetime
 import multiprocessing as mp
 
 credentials = pika.PlainCredentials('admin', 'admin')
-connection = pika.BlockingConnection(pika.ConnectionParameters('localhost',
+connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.1.65',
                                                                5672,
                                                                '/',
                                                                credentials,blocked_connection_timeout=0,heartbeat=0))
@@ -28,7 +28,7 @@ channel.exchange_declare("altitude", exchange_type='topic', passive=False,
 
 connection_db = psycopg2.connect(user="postgres",   
                               password="vfvfcdtnf",
-                              host="localhost",
+                              host="192.168.1.65",
                               port="5432",
                               database="postgres_db")
 

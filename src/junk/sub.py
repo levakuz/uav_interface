@@ -10,7 +10,7 @@ import pika
 import datetime
 
 credentials = pika.PlainCredentials('admin', 'admin')
-connection = pika.BlockingConnection(pika.ConnectionParameters('localhost',
+connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.1.65',
                                                                5672,
                                                                '/',
                                                                credentials))
@@ -35,8 +35,8 @@ channel.exchange_declare("goals", exchange_type='topic', passive=False,
                          durable=False, auto_delete=False, arguments=None)
 
 connection_db = psycopg2.connect(user="postgres",
-                              password="vfvfcdtnf",
-                              host="127.0.0.1",
+                              password="password",
+                              host="192.168.1.65",
                               port="5432",
                               database="postgres_db")
 
