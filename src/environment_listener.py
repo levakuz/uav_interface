@@ -10,7 +10,7 @@ from psycopg2 import Error
 
 
 credentials = pika.PlainCredentials('admin', 'admin')
-connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.0.33',
+connection = pika.BlockingConnection(pika.ConnectionParameters('localhost',
                                                                5672,
                                                                '/',
                                                                credentials))

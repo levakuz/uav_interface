@@ -28,11 +28,6 @@ class GoalObjectsListener:
 
         self.channel.exchange_declare("CO", exchange_type='topic', passive=False,
                                  durable=False, auto_delete=False, arguments=None)
-        self.connection_db = psycopg2.connect(user=self.db_username,
-                                         password=self.db_password,
-                                         host=self.db_ip,
-                                         port="5432",
-                                         database=self.db_name)
 
     def gazebo_co_callback(self, data):
         # print("here")
@@ -192,6 +187,6 @@ class GoalObjectsListener:
         rospy.Subscriber("/gazebo/model_states", ModelStates, self.gazebo_co_callback)
 
 #example
-lisener = GoalObjectsListener("admin", "admin", "192.168.0.17")
+lisener = GoalObjectsListener("admin", "admin", "localhost")
 lisener.listener()
 rospy.spin()

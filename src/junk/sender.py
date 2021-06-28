@@ -8,7 +8,7 @@ class FibonacciRpcClient(object):
 
     def __init__(self):
         credentials = pika.PlainCredentials('admin', 'admin')
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.0.17',
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters('localhost',
                                                                        5672,
                                                                        '/',
                                                                        credentials, blocked_connection_timeout=0,

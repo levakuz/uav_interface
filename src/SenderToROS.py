@@ -13,7 +13,7 @@ import datetime
 
 
 credentials = pika.PlainCredentials('admin', 'admin')
-connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.1.71',
+connection = pika.BlockingConnection(pika.ConnectionParameters('localhost',
                                                                5672,
                                                                '/',
                                                                credentials))
