@@ -19,10 +19,10 @@ def create_table_co(connection):
 
     except (Exception, Error) as error:
         print("Ошибка при работе с PostgreSQL", error)
+        connection.rollback()
     finally:
         if connection:
             cursor.close()
-            connection.close()
             print("Соединение с PostgreSQL закрыто")
 
 
@@ -46,10 +46,10 @@ def create_table_co_dynamic_params(connection):
 
     except (Exception, Error) as error:
         print("Ошибка при работе с PostgreSQL", error)
+        connection.rollback()
     finally:
         if connection:
             cursor.close()
-            connection.close()
             print("Соединение с PostgreSQL закрыто")
 
 
@@ -79,10 +79,10 @@ def create_table_co_type(connection):
 
     except (Exception, Error) as error:
         print("Ошибка при работе с PostgreSQL", error)
+        connection.rollback()
     finally:
         if connection:
             cursor.close()
-            connection.close()
             print("Соединение с PostgreSQL закрыто")
 
 
@@ -107,10 +107,10 @@ def create_table_co_weapon(connection):
 
     except (Exception, Error) as error:
         print("Ошибка при работе с PostgreSQL", error)
+        connection.rollback()
     finally:
         if connection:
             cursor.close()
-            connection.close()
             print("Соединение с PostgreSQL закрыто")
 
 
@@ -143,10 +143,10 @@ def create_table_mission_input(connection):
 
     except (Exception, Error) as error:
         print("Ошибка при работе с PostgreSQL", error)
+        connection.rollback()
     finally:
         if connection:
             cursor.close()
-            connection.close()
             print("Соединение с PostgreSQL закрыто")
 
 
@@ -169,10 +169,10 @@ def create_table_mission_output(connection):
 
     except (Exception, Error) as error:
         print("Ошибка при работе с PostgreSQL", error)
+        connection.rollback()
     finally:
         if connection:
             cursor.close()
-            connection.close()
             print("Соединение с PostgreSQL закрыто")
 
 
@@ -197,10 +197,10 @@ def create_table_uav(connection):
 
     except (Exception, Error) as error:
         print("Ошибка при работе с PostgreSQL", error)
+        connection.rollback()
     finally:
         if connection:
             cursor.close()
-            connection.close()
             print("Соединение с PostgreSQL закрыто")
 
 
@@ -226,10 +226,10 @@ def create_table_uav_dynamic_params(connection):
 
     except (Exception, Error) as error:
         print("Ошибка при работе с PostgreSQL", error)
+        connection.rollback()
     finally:
         if connection:
             cursor.close()
-            connection.close()
             print("Соединение с PostgreSQL закрыто")
 
 
@@ -252,10 +252,10 @@ def create_table_uav_role(connection):
 
     except (Exception, Error) as error:
         print("Ошибка при работе с PostgreSQL", error)
+        connection.rollback()
     finally:
         if connection:
             cursor.close()
-            connection.close()
             print("Соединение с PostgreSQL закрыто")
 
 
@@ -287,10 +287,10 @@ def create_table_uav_type(connection):
 
     except (Exception, Error) as error:
         print("Ошибка при работе с PostgreSQL", error)
+        connection.rollback()
     finally:
         if connection:
             cursor.close()
-            connection.close()
             print("Соединение с PostgreSQL закрыто")
 
 
@@ -300,7 +300,7 @@ if __name__ == "__main__":
                                       password="password",
                                       host="192.168.1.65",
                                       port="5432",
-                                      database="postgres_db")
+                                      database="postgres")
     create_table_co(connection)
     create_table_co_dynamic_params(connection)
     create_table_co_type(connection)
@@ -311,3 +311,4 @@ if __name__ == "__main__":
     create_table_uav_dynamic_params(connection)
     create_table_uav_role(connection)
     create_table_uav_type(connection)
+    connection.close()
