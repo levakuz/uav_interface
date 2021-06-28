@@ -161,10 +161,13 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
  catkin_install_python(PROGRAMS
-   src/uav_listener.py
-   src/sub.py
-   src/SenderToROS.py
-   src/goal_objects.py
+   src/co_spawner.py
+   src/environment_listener.py
+   src/GoalSaveStates.py
+   src/uav_listener_class.py
+   src/uav_look_dynamic_params.py
+   src/uav_spawner.py
+   src/UaVSaveStates.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
