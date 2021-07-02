@@ -33,7 +33,7 @@ def check_uav_create(ch, method, properties, body):
         new_uav = UavSaver(json.loads(body)["id"],
                            "postgres",
                            "password",
-                           "192.168.0.17",
+                           "192.168.1.65",
                            "postgres")
         uav_list.append(new_uav)
         print(uav_list)
