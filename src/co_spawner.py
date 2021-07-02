@@ -7,6 +7,8 @@ import json
 import random
 from Heightmap import Heightmap
 import PathPlanner as pp
+import uuid
+
 
 credentials = pika.PlainCredentials('admin', 'admin')
 connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.1.65',
@@ -17,10 +19,12 @@ connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.1.65',
 channel = connection.channel()
 
 
+
+
 def spawn_co_rpc(ch, method, properties, body):
     hm = Heightmap()
-    hmap, height, width = hm.prepare_heightmap()
-    map_handler = pp.PathPlanner(hmap, height, width)
+    hmap, height, width, x_step_size, y_step_size, grid_range = hm.prepare_heightmap()
+    map_handler = pp.PathPlanner(hmap, height, width, grid_range, x_step_size, y_step_size)
     map_handler.gridmap_preparing()
     recived_message = json.loads(body)
     obstacles = map_handler.detect_obstacles()
@@ -45,14 +49,14 @@ def spawn_co_rpc(ch, method, properties, body):
                 rover_name = "p3at" + str(i)
                 spawn_model_client = rospy.ServiceProxy('/gazebo/spawn_urdf_model', SpawnModel)
                 spawnpoint_is_obstacle = True
-                while spawnpoint_is_obstacle:  # Проверяем является ли точка препятствием
+                while spawnpoint_is_obstacle:  # Check point is an obstacle
                     new_point = (str(int(random.uniform(int(topleft["x"]), int(bottomright["x"])))),
                                  str(int(random.uniform(int(topleft["y"]), int(bottomright["y"])))))
                     print("Checking")
-                    if new_point not in map_handler.obstacles: # Если нет в list с препятствиями, то спавним
+                    if new_point not in map_handler.obstacles: # If not in obstacles list spawn model
                         spawn_model_client(
                             rover_name,
-                            open("/home/levakuz/catkin/src/targets_path_planning/urdf/pioneer3at_1.urdf", 'r').read(),
+                            open("/home/defender/catkin_ws/src/targets_path_planning/urdf/pioneer3at_1.urdf", 'r').read(),
                             "/rover",
                             Pose(position=Point(int(new_point[0]), int(new_point[1]), 2),
                                  orientation=Quaternion(0, 0, 0, 0)), "world")

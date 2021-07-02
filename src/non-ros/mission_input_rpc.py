@@ -18,18 +18,17 @@ connection_db = psycopg2.connect(user="postgres",
                                  port="5432",
                                  database="postgres")
 
-
 def add_mission_rpc(ch, method, properties, body):
     recived_message = json.loads(body)
     status_message = {}
     final_json = {}
     try:
         cursor = connection_db.cursor()
-        insert_query = """ INSERT INTO mission_input (directive_time_secs, time_out_of_launches, 
+        insert_query = """ INSERT INTO mission (status, directive_time_secs, time_out_of_launches, 
         simultaneous_launch_number, reset_point, landing_point, uavs, payload, target_type, dest_poligon,
-        targets_number, targets_coords, time_intervals) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+        targets_number, targets_coords, time_intervals) VALUES (%s ,%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
         """
-        val = (recived_message["directive_time_secs"], recived_message["time_out_of_launches"], \
+        val = (0, recived_message["directive_time_secs"], recived_message["time_out_of_launches"], \
               recived_message["simultaneous_launch_number"], recived_message["reset_point"], \
               recived_message["landing_point"], recived_message["uavs"], recived_message["payload"], \
               recived_message["target_type"], recived_message["dest_poligon"], recived_message["targets_number"], \
@@ -73,7 +72,8 @@ def add_mission_rpc(ch, method, properties, body):
                                                              properties.correlation_id),
                          body=json.dumps(status_message))
 
-    except TypeError:
+    except TypeError as e:
+        print(e)
         status_message["status"] = "error"
         status_message["details"] = "wrong format"
         ch.basic_publish(exchange='',
@@ -249,7 +249,9 @@ def get_mission_rpc(ch, method, properties, body):
                          properties=pika.BasicProperties(correlation_id= \
                                                              properties.correlation_id),
                          body=json.dumps(status_message))
-    except TypeError:
+    except TypeError as e:
+        print(e)
+        print("here")
         status_message = {"status": "error", "details": "wrong format"}
         ch.basic_publish(exchange='',
                          routing_key=properties.reply_to,

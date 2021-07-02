@@ -4,6 +4,7 @@ import psycopg2
 import json
 import random
 from psycopg2 import Error
+import uuid
 
 credentials = pika.PlainCredentials('admin', 'admin')
 connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.1.65',
@@ -19,6 +20,23 @@ connection_db = psycopg2.connect(user="postgres",
                               host="192.168.1.65",
                               port="5432",
                               database="postgres")
+
+def call(message):
+    result = channel.queue_declare(queue='', exclusive=True)
+    callback_queue = result.method.queue
+    response = None
+    corr_id = str(uuid.uuid4())
+    channel.basic_publish(
+        exchange='',
+        routing_key='spawn_co_rpc',
+        properties=pika.BasicProperties(
+            reply_to=callback_queue,
+            correlation_id=corr_id,
+        ),
+        body=str(message))
+    while response is None:
+        connection.process_data_events()
+    return response
 
 
 def add_co_rpc(ch, method, properties, body):
@@ -36,6 +54,7 @@ def add_co_rpc(ch, method, properties, body):
             # item_tuple = (recived_message["co_type"])
             cursor.execute(insert_query)
             connection_db.commit()
+            call(recived_message["id"])
             status_message = {"status": "success"}
             ch.basic_publish(exchange='',
                              routing_key=properties.reply_to,

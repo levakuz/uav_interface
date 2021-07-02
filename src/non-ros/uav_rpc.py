@@ -106,22 +106,22 @@ def get_uav_rpc(ch, method, properties, body):
     recived_message = json.loads(body)
     final_json = {}
     try:
-        if recived_message["tail_number"]:
+        if recived_message["id"]:
 
             cursor = connection_db.cursor()
-            insert_query = """ SELECT * FROM uav WHERE tail_number = '{}';
-                                    """.format(recived_message["tail_number"])
+            insert_query = """ SELECT * FROM uav WHERE id = '{}';
+                                    """.format(recived_message["id"])
             cursor.execute(insert_query)
             record = cursor.fetchone()
             cursor.close()
             if record:
                 print(record)
-                final_json["id"] = record[-2]
-                final_json["tail_number"] = record[0]
-                final_json["uav_type"] = record[1]
+                final_json["id"] = record[0]
+                final_json["tail_number"] = record[1]
+                final_json["uav_type"] = record[2]
                 final_json["uav_role"] = record[-1]
-                final_json["fuel_resource"] = record[2]
-                final_json["time_for_prepare"] = record[3]
+                final_json["fuel_resource"] = record[5]
+                final_json["time_for_prepare"] = record[4]
                 print(final_json)
             else:
                 final_json["status"] = "Not found"
@@ -144,12 +144,12 @@ def get_uav_rpc(ch, method, properties, body):
             final_json = {}
             if records:
                 for record in records:
-                    final_json[record[-2]] = {}
-                    final_json[record[-2]]["tail_number"] = record[0]
-                    final_json[record[-2]]["uav_type"] = record[1]
-                    final_json[record[-2]]["uav_role"] = record[-1]
-                    final_json[record[-2]]["fuel_resource"] = record[2]
-                    final_json[record[-2]]["time_for_prepare"] = record[3]
+                    final_json[record[0]] = {}
+                    final_json[record[0]]["tail_number"] = record[1]
+                    final_json[record[0]]["uav_type"] = record[2]
+                    final_json[record[0]]["uav_role"] = record[-1]
+                    final_json[record[0]]["fuel_resource"] = record[5]
+                    final_json[record[0]]["time_for_prepare"] = record[4]
                 print(final_json)
 
                 print(json.dumps(final_json))

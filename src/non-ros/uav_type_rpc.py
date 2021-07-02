@@ -88,18 +88,18 @@ def get_uav_type_rpc(ch, method, properties, body):
             cursor.close()
             if record:
                 print(record)
-                final_json = {"name": record[0][-2], "vel": []}
-                final_json["vel"].append(record[0][0])
-                final_json["vel"].append(record[0][1])
+                final_json = {"name": record[0][1], "vel": []}
+                final_json["vel"].append(record[0][2])
+                final_json["vel"].append(record[0][3])
                 final_json["vertical_vel_up"] = []
-                final_json["vertical_vel_up"].append(record[0][3])
-                final_json["vertical_vel_up"].append(record[0][2])
+                final_json["vertical_vel_up"].append(record[0][4])
+                final_json["vertical_vel_up"].append(record[0][5])
                 final_json["vertical_vel_down"] = []
-                final_json["vertical_vel_down"].append(record[0][5])
-                final_json["vertical_vel_down"].append(record[0][4])
-                final_json["cargo_type"] = record[0][6]
-                final_json["fuel_consume"] = record[0][7]
-                final_json["radius_of_turn"] = record[0][8]
+                final_json["vertical_vel_down"].append(record[0][6])
+                final_json["vertical_vel_down"].append(record[0][7])
+                final_json["cargo_type"] = record[0][8]
+                final_json["fuel_consume"] = record[0][9]
+                final_json["radius_of_turn"] = record[0][10]
                 ch.basic_publish(exchange='',
                                  routing_key=properties.reply_to,
                                  properties=pika.BasicProperties(correlation_id= \
@@ -126,20 +126,20 @@ def get_uav_type_rpc(ch, method, properties, body):
                 final_json = {}
                 for record in records:
                     print(record)
-                    final_json[record[-1]] = {}
-                    final_json[record[-1]]["name"] = record[-2]
-                    final_json[record[-1]]["vel"] = []
-                    final_json[record[-1]]["vel"].append(record[0])
-                    final_json[record[-1]]["vel"].append(record[1])
-                    final_json[record[-1]]["vertical_vel_up"] = []
-                    final_json[record[-1]]["vertical_vel_up"].append(record[3])
-                    final_json[record[-1]]["vertical_vel_up"].append(record[2])
-                    final_json[record[-1]]["vertical_vel_down"] = []
-                    final_json[record[-1]]["vertical_vel_down"].append(record[5])
-                    final_json[record[-1]]["vertical_vel_down"].append(record[4])
-                    final_json[record[-1]]["cargo_type"] = record[6]
-                    final_json[record[-1]]["fuel_consume"] = record[7]
-                    final_json[record[-1]]["radius_of_turn"] = record[8]
+                    final_json[record[0]] = {}
+                    final_json[record[0]]["name"] = record[1]
+                    final_json[record[0]]["vel"] = []
+                    final_json[record[0]]["vel"].append(record[2])
+                    final_json[record[0]]["vel"].append(record[3])
+                    final_json[record[0]]["vertical_vel_up"] = []
+                    final_json[record[0]]["vertical_vel_up"].append(record[4])
+                    final_json[record[0]]["vertical_vel_up"].append(record[5])
+                    final_json[record[0]]["vertical_vel_down"] = []
+                    final_json[record[0]]["vertical_vel_down"].append(record[6])
+                    final_json[record[0]]["vertical_vel_down"].append(record[7])
+                    final_json[record[0]]["cargo_type"] = record[8]
+                    final_json[record[0]]["fuel_consume"] = record[9]
+                    final_json[record[0]]["radius_of_turn"] = record[10]
 
                 print(json.dumps(final_json))
                 ch.basic_publish(exchange='',

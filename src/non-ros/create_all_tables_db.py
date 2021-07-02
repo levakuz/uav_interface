@@ -114,58 +114,36 @@ def create_table_co_weapon(connection):
             print("Соединение с PostgreSQL закрыто")
 
 
-def create_table_mission_input(connection):
+def create_table_mission(connection):
     try:
 
         # Создайте курсор для выполнения операций с базой данных
         cursor = connection.cursor()
         # SQL-запрос для создания новой таблицы
-        create_table_query = '''CREATE TABLE mission_input
+        create_table_query = '''CREATE TABLE mission
                               (
                                id integer NOT NULL,
+                               status integer NOT NULL, 
+                               uavs text NOT NULL,
                                directive_time_secs integer NOT NULL,
                                time_out_of_launches integer NOT NULL,
                                simultaneous_launch_number integer NOT NULL,
                                reset_point text NOT NULL,
                                landing_point text NOT NULL,
-                               uavs text NOT NULL,
                                payload text,
                                target_type integer NOT NULL,
                                dest_poligon text NOT NULL,
                                targets_number integer NOT NULL,
                                targets_coords text NOT NULL,
-                               time_intervals text NOT NULL
+                               time_intervals text,
+                               accomplished int,
+                               time_zero integer,
+                               uavs_to_mission text 
                               ); '''
         # Выполнение команды: это создает новую таблицу
         cursor.execute(create_table_query)
         connection.commit()
-        print("Таблица mission_input успешно создана в PostgreSQL")
-
-    except (Exception, Error) as error:
-        print("Ошибка при работе с PostgreSQL", error)
-        connection.rollback()
-    finally:
-        if connection:
-            cursor.close()
-            print("Соединение с PostgreSQL закрыто")
-
-
-def create_table_mission_output(connection):
-    try:
-
-        # Создайте курсор для выполнения операций с базой данных
-        cursor = connection.cursor()
-        # SQL-запрос для создания новой таблицы
-        create_table_query = '''CREATE TABLE mission_output
-                              (
-                               id integer NOT NULL,
-                               time_zero integer NOT NULL,
-                               uavs text NOT NULL
-                              ); '''
-        # Выполнение команды: это создает новую таблицу
-        cursor.execute(create_table_query)
-        connection.commit()
-        print("Таблица mission_output успешно создана в PostgreSQL")
+        print("Таблица mission успешно создана в PostgreSQL")
 
     except (Exception, Error) as error:
         print("Ошибка при работе с PostgreSQL", error)
@@ -184,6 +162,7 @@ def create_table_uav(connection):
         create_table_query = '''CREATE TABLE uav
                               (
                                id integer NOT NULL,
+                               mission_id integer,
                                tail_number integer NOT NULL,
                                uav_type integer NOT NULL,
                                fuel_resource integer NOT NULL,
@@ -305,8 +284,7 @@ if __name__ == "__main__":
     create_table_co_dynamic_params(connection)
     create_table_co_type(connection)
     create_table_co_weapon(connection)
-    create_table_mission_input(connection)
-    create_table_mission_output(connection)
+    create_table_mission(connection)
     create_table_uav(connection)
     create_table_uav_dynamic_params(connection)
     create_table_uav_role(connection)
