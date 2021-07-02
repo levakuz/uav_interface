@@ -4,7 +4,7 @@ from waitress import serve
 import json
 connection_db = psycopg2.connect(user="postgres",
                               password="password",
-                              host="192.168.1.65",
+                              host="192.168.0.17",
                               port="5432",
                               database="postgres")
 

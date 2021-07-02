@@ -5,7 +5,7 @@ import json
 import random
 from psycopg2 import Error
 credentials = pika.PlainCredentials('admin', 'admin')
-connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.1.65',
+connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.0.17',
                                                                5672,
                                                                '/',
                                                                credentials,blocked_connection_timeout=0,heartbeat=0))
@@ -15,7 +15,7 @@ channel = connection.channel()
 
 connection_db = psycopg2.connect(user="postgres",
                               password="password",
-                              host="192.168.1.65",
+                              host="192.168.0.17",
                               port="5432",
                               database="postgres")
 
@@ -34,14 +34,15 @@ def add_co_type_rpc(ch, method, properties, body):
                 cursor = connection_db.cursor()
                 insert_query = """ INSERT INTO co_type 
                 (name, max_vel, max_acc, min_acc, length, width, height, radius_of_turn, weapon)
-                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id"""
                 item_tuple = (recived_message["name"], recived_message["max_vel"], recived_message["max_acc"],
                               recived_message["min_acc"],
                               recived_message["length"], recived_message["width"], recived_message["height"],
                               recived_message["radius_of_turn"], recived_message["weapon"])
                 cursor.execute(insert_query, item_tuple)
                 connection_db.commit()
-                status_message= {"status": "success"}
+                id_of_new_row = cursor.fetchone()[0]
+                status_message = {"status": "success", "id": id_of_new_row}
                 ch.basic_publish(exchange='',
                                  routing_key=properties.reply_to,
                                  properties=pika.BasicProperties(correlation_id= \

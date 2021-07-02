@@ -5,7 +5,7 @@ import json
 import random
 from psycopg2 import Error
 credentials = pika.PlainCredentials('admin', 'admin')
-connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.1.65',
+connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.0.17',
                                                                5672,
                                                                '/',
                                                                credentials,blocked_connection_timeout=0,heartbeat=0))
@@ -15,7 +15,7 @@ channel = connection.channel()
 
 connection_db = psycopg2.connect(user="postgres",
                               password="password",
-                              host="192.168.1.65",
+                              host="192.168.0.17",
                               port="5432",
                               database="postgres")
 
@@ -28,8 +28,10 @@ def add_uav_type_rpc(ch, method, properties, body):
     try:
         print("here1")
         cursor = connection_db.cursor()
-        insert_query = """ INSERT INTO uav_type (name, min_vel, max_vel, min_vertical_vel_up, max_vertical_vel_up, min_vertical_vel_down, max_vertical_vel_down, cargo_type, cargo_quantity, fuel_consume, radius_of_turn)
-                                                               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+        insert_query = """ INSERT INTO uav_type (name, min_vel, max_vel, min_vertical_vel_up, max_vertical_vel_up, 
+        min_vertical_vel_down, max_vertical_vel_down, cargo_type, cargo_quantity, fuel_consume, radius_of_turn)
+                                                               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                                               RETURNING id;"""
         item_tuple = (recived_message["name"], recived_message["vel"][0], recived_message["vel"][1],
                       recived_message["vertical_vel_up"][0], recived_message["vertical_vel_up"][1],
                       recived_message["vertical_vel_down"][0], recived_message["vertical_vel_down"][1],
@@ -37,8 +39,9 @@ def add_uav_type_rpc(ch, method, properties, body):
                       recived_message["fuel_consume"], recived_message["radius_of_turn"])
         cursor.execute(insert_query, item_tuple)
         connection_db.commit()
+        id_of_new_row = cursor.fetchone()[0]
+        status_message = {"status": "success", "id": id_of_new_row}
         cursor.close()
-        status_message["status"] = "success"
         ch.basic_publish(exchange='',
                          routing_key=properties.reply_to,
                          properties=pika.BasicProperties(correlation_id= \

@@ -7,7 +7,7 @@ from psycopg2 import Error
 import uuid
 
 credentials = pika.PlainCredentials('admin', 'admin')
-connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.1.65',
+connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.0.17',
                                                                5672,
                                                                '/',
                                                                credentials,blocked_connection_timeout=0,heartbeat=0))
@@ -17,7 +17,7 @@ channel = connection.channel()
 
 connection_db = psycopg2.connect(user="postgres",
                               password="password",
-                              host="192.168.1.65",
+                              host="192.168.0.17",
                               port="5432",
                               database="postgres")
 
@@ -50,12 +50,13 @@ def add_co_rpc(ch, method, properties, body):
         record = cursor.fetchone()
         if record:
             cursor = connection_db.cursor()
-            insert_query = """ INSERT INTO co (co_type) VALUES ('{}');""".format(recived_message["co_type"])
+            insert_query = """ INSERT INTO co (co_type) VALUES ('{}') RETURNING id;""".format(recived_message["co_type"])
             # item_tuple = (recived_message["co_type"])
             cursor.execute(insert_query)
+            id_of_new_row = cursor.fetchone()[0]
+            status_message = {"status": "success", "id": id_of_new_row}
             connection_db.commit()
-            call(recived_message["id"])
-            status_message = {"status": "success"}
+            call(id_of_new_row)
             ch.basic_publish(exchange='',
                              routing_key=properties.reply_to,
                              properties=pika.BasicProperties(correlation_id= \

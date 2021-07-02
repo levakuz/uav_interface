@@ -5,7 +5,7 @@ import json
 import random
 from psycopg2 import Error
 credentials = pika.PlainCredentials('admin', 'admin')
-connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.1.65',
+connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.0.17',
                                                                5672,
                                                                '/',
                                                                credentials,blocked_connection_timeout=0,heartbeat=0))
@@ -15,7 +15,7 @@ channel = connection.channel()
 
 connection_db = psycopg2.connect(user="postgres",
                               password="password",
-                              host="192.168.1.65",
+                              host="192.168.0.17",
                               port="5432",
                               database="postgres")
 
@@ -26,13 +26,14 @@ def add_co_weapon_rpc(ch, method, properties, body):
     try:
         cursor = connection_db.cursor()
         insert_query = """ INSERT INTO co_weapon (name, range_horizontal, range_vertical, rapidity)
-         VALUES (%s, %s, %s, %s)"""
+         VALUES (%s, %s, %s, %s) RETURNING id"""
         item_tuple = (recived_message["name"], recived_message["range_horizontal"],
                       recived_message["range_vertical"], recived_message["rapidity"])
         cursor.execute(insert_query, item_tuple)
         connection_db.commit()
         cursor.close()
-        status_message= {"status": "success"}
+        id_of_new_row = cursor.fetchone()[0]
+        status_message = {"status": "success", "id": id_of_new_row}
         ch.basic_publish(exchange='',
                          routing_key=properties.reply_to,
                          properties=pika.BasicProperties(correlation_id= \

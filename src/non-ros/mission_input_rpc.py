@@ -5,7 +5,7 @@ import json
 from psycopg2 import Error
 
 credentials = pika.PlainCredentials('admin', 'admin')
-connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.1.65',
+connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.0.17',
                                                                5672,
                                                                '/',
                                                                credentials, blocked_connection_timeout=0, heartbeat=0))
@@ -14,7 +14,7 @@ channel = connection.channel()
 
 connection_db = psycopg2.connect(user="postgres",
                                  password="password",
-                                 host="192.168.1.65",
+                                 host="192.168.0.17",
                                  port="5432",
                                  database="postgres")
 
@@ -26,8 +26,8 @@ def add_mission_rpc(ch, method, properties, body):
         cursor = connection_db.cursor()
         insert_query = """ INSERT INTO mission (status, directive_time_secs, time_out_of_launches, 
         simultaneous_launch_number, reset_point, landing_point, uavs, payload, target_type, dest_poligon,
-        targets_number, targets_coords, time_intervals) VALUES (%s ,%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
-        """
+        targets_number, targets_coords, time_intervals) VALUES (%s ,%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)\
+        RETURNING id;"""
         val = (0, recived_message["directive_time_secs"], recived_message["time_out_of_launches"], \
               recived_message["simultaneous_launch_number"], recived_message["reset_point"], \
               recived_message["landing_point"], recived_message["uavs"], recived_message["payload"], \
@@ -44,7 +44,8 @@ def add_mission_rpc(ch, method, properties, body):
         #     properties=pika.BasicProperties(
         #         delivery_mode=2,
         #     ))
-        final_json = {"status": "success"}
+        id_of_new_row = cursor.fetchone()[0]
+        status_message = {"status": "success", "id": id_of_new_row}
         ch.basic_publish(exchange='',
                          routing_key=properties.reply_to,
                          properties=pika.BasicProperties(correlation_id= \

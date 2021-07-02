@@ -33,7 +33,7 @@ class FibonacciRpcClient(object):
         self.corr_id = str(uuid.uuid4())
         self.channel.basic_publish(
             exchange='',
-            routing_key='add_mission_rpc',
+            routing_key='add_co_rpc',
             properties=pika.BasicProperties(
                 reply_to=self.callback_queue,
                 correlation_id=self.corr_id,
@@ -58,7 +58,7 @@ recived_message = {"directive_time_secs": 11, "time_out_of_launches": 123, "simu
 # recived_message = {'name': 'Heh', 'vel': [0, 10], 'vertical_vel_up': [0, 10], 'vertical_vel_down': [0, 10], 'cargo_type': 1, 'cargo_quantity': 10, 'fuel_consume': 10, 'radius_of_turn': 3}
 # recived_message = {"name": '1', 'range_horizontal': 20, 'range_vertical': 10, 'rapidity': 10}
 # recived_message = {"name": '1', 'max_vel': 20, 'max_acc': 10, 'min_acc': 10, 'length': 5, 'height': 10, 'width': 20,'radius_of_turn': 50, 'weapon': 1}
-# recived_message = {'co_type': 1}
+recived_message = {'co_type': 1}
 # recived_message["tail_number"] = 123
 # recived_message["uav_role"] = 1
 # recived_message["fuel_resource"] = 123

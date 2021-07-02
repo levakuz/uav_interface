@@ -10,7 +10,7 @@ from psycopg2 import Error
 
 
 credentials = pika.PlainCredentials('admin', 'admin')
-connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.1.65',
+connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.0.17',
                                                                5672,
                                                                '/',
                                                                credentials))
@@ -27,7 +27,7 @@ channel.exchange_declare("temperature", exchange_type='topic', passive=False,
 
 connection = psycopg2.connect(user="postgres",
                               password="password",
-                              host="192.168.1.65",
+                              host="192.168.0.17",
                               port="5432",
                               database="postgres_db")
 

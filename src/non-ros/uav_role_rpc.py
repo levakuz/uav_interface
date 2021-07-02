@@ -5,7 +5,7 @@ import json
 import random
 from psycopg2 import Error
 credentials = pika.PlainCredentials('admin', 'admin')
-connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.1.65',
+connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.0.17',
                                                                5672,
                                                                '/',
                                                                credentials,blocked_connection_timeout=0,heartbeat=0))
@@ -15,7 +15,7 @@ channel = connection.channel()
 
 connection_db = psycopg2.connect(user="postgres",
                               password="password",
-                              host="192.168.1.65",
+                              host="192.168.0.17",
                               port="5432",
                               database="postgres")
 
@@ -36,12 +36,13 @@ def add_uav_role_rpc(ch, method, properties, body):
             uav_type_id = record[0]
             print("here1")
             cursor = connection_db.cursor()
-            insert_query = """ INSERT INTO uav_role(name, uav_type) VALUES (%s, %s)"""
+            insert_query = """ INSERT INTO uav_role(name, uav_type) VALUES (%s, %s) RETURNING id;"""
             item_tuple = (recived_message["name"], uav_type_id)
             cursor.execute(insert_query, item_tuple)
             connection_db.commit()
             cursor.close()
-            status_message = {"status": "success"}
+            id_of_new_row = cursor.fetchone()[0]
+            status_message = {"status": "success", "id": id_of_new_row}
             ch.basic_publish(exchange='',
                              routing_key=properties.reply_to,
                              properties=pika.BasicProperties(correlation_id= \
