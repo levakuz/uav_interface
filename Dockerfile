@@ -11,4 +11,4 @@ RUN pip3 install pika
 ARG CACHEBUST=1
 RUN git clone https://github.com/levakuz/uav_interface.git
 WORKDIR uav_interface
-RUN git checkout dev2
+RUN git checkout dev1
