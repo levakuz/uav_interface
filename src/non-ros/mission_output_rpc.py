@@ -3,6 +3,8 @@ import pika
 import psycopg2
 import json
 from psycopg2 import Error
+from RpcClient import RpcClient
+
 
 credentials = pika.PlainCredentials('admin', 'admin')
 connection = pika.BlockingConnection(pika.ConnectionParameters('192.168.1.65',
@@ -77,9 +79,11 @@ def add_mission_output_rpc(ch, method, properties, body):
                          body=json.dumps(status_message))
 
 
-channel.queue_declare(queue='add_mission_output_rpc', durable=False)
-channel.basic_consume(queue='add_mission_output_rpc', on_message_callback=add_mission_output_rpc, auto_ack=True)
+# channel.queue_declare(queue='add_mission_output_rpc', durable=False)
+# channel.basic_consume(queue='add_mission_output_rpc', on_message_callback=add_mission_output_rpc, auto_ack=True)
+#
+#
+# channel.start_consuming()
 
-
-channel.start_consuming()
-
+MissionOutputRpc = RpcClient
+MissionOutputRpc.call()

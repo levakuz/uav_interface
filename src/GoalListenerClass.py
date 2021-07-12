@@ -4,8 +4,6 @@ import json
 from gazebo_msgs.msg import ModelStates
 from geometry_msgs.msg import Quaternion, Pose
 from geometry_msgs.msg import Twist
-import psycopg2
-from psycopg2 import Error
 import datetime
 import pika
 
